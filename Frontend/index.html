@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Vigilancia IA - Panel de Control</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- MAPA INTERACTIVO -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- HEATMAP -->
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  LOGIN SCREEN                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="login-screen">
+    <div class="login-box">
+        <div class="login-logo">🛡️</div>
+        <h2>Sistema de Vigilancia IA</h2>
+        <p class="login-sub">Universidad Central — Acceso Institucional</p>
+
+        <div class="login-field">
+            <label>Usuario</label>
+            <input type="text" id="login-user" placeholder="Ingrese su usuario" autocomplete="username">
+        </div>
+        <div class="login-field">
+            <label>Contraseña</label>
+            <input type="password" id="login-pass" placeholder="Ingrese su contraseña" autocomplete="current-password">
+        </div>
+        <button class="btn-login" id="btn-login">Iniciar Sesión</button>
+        <p class="login-error" id="login-error">Usuario o contraseña incorrectos</p>
+        <p class="login-aviso">⚠️ Sistema exclusivo para uso institucional</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  MAIN APP                                  -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="app">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="topbar-logo">🛡️</div>
+        <div class="topbar-title">Sistema de <span>Vigilancia</span> IA</div>
+        <div class="topbar-user">
+            <span id="topbar-username">Operador</span>
+            <span class="topbar-badge role" id="topbar-role">Monitoreo</span>
+            <div class="topbar-notif" title="Notificaciones">
+                🔔
+                <span class="notif-dot" id="notif-dot"></span>
+            </div>
+            <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="app-body">
+
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-label">Principal</div>
+                <div class="nav-item active" onclick="cambiarVista('monitoreo', this)">
+                    <span class="nav-icon">📹</span> Monitoreo en Vivo
+                </div>
+                <div class="nav-item" onclick="cambiarVista('alertas', this)">
+                    <span class="nav-icon">🚨</span> Alertas Inteligentes
+                    <span class="nav-badge" id="badge-alertas" style="display:none">0</span>
+                </div>
+            </div>
+            <div class="nav-item" onclick="cambiarVista('control', this)">
+                <span class="nav-icon">🏛️</span>
+                <span class="nav-label">Control</span>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-label">Análisis</div>
+                <div class="nav-item" onclick="cambiarVista('facial', this)">
+                    <span class="nav-icon">👤</span> Reconocimiento Facial
+                </div>
+                <div class="nav-item" onclick="cambiarVista('patrones', this)">
+                    <span class="nav-icon">📊</span> Análisis de Patrones
+                </div>
+                <div class="nav-item" onclick="cambiarVista('reportes', this)">
+                    <span class="nav-icon">📋</span> Reportes
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-label">Gestión</div>
+                <div class="nav-item" onclick="cambiarVista('camaras', this)">
+                    <span class="nav-icon">🎥</span> Gestión de Cámaras
+                </div>
+                <div class="nav-item" onclick="cambiarVista('usuarios', this)">
+                    <span class="nav-icon">👥</span> Gestión de Usuarios
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <div class="live-indicator">
+                    <span class="live-dot"></span>
+                    <span id="sidebar-system-status">Esperando inicio...</span>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- ── VISTA: ALERTAS INTELIGENTES ── -->
+        <div class="view" id="view-alertas">
+            <div class="view-inner">
+        
+                <!-- Encabezado con filtros -->
+                <div class="vi-header">
+                    <div class="vi-title">🚨 Alertas Inteligentes</div>
+                    <div class="vi-filtros">
+                        <select class="vi-select" id="filtro-nivel-alerta" onchange="filtrarAlertas()">
+                            <option value="todos">Todos los niveles</option>
+                            <option value="alto">🔴 Alto</option>
+                            <option value="medio">🟡 Medio</option>
+                            <option value="bajo">🟢 Bajo</option>
+                        </select>
+                        <button class="vi-btn-refresh" onclick="cargarAlertasCompletas()">↺ Actualizar</button>
+                    </div>
+                </div>
+        
+                <!-- Contadores rápidos -->
+                <div class="vi-counters">
+                    <div class="vi-counter rojo">
+                        <span class="vi-counter-num" id="cnt-alto">0</span>
+                        <span class="vi-counter-lbl">Riesgo Alto</span>
+                    </div>
+                    <div class="vi-counter ambar">
+                        <span class="vi-counter-num" id="cnt-medio">0</span>
+                        <span class="vi-counter-lbl">Riesgo Medio</span>
+                    </div>
+                    <div class="vi-counter verde">
+                        <span class="vi-counter-num" id="cnt-bajo">0</span>
+                        <span class="vi-counter-lbl">Riesgo Bajo</span>
+                    </div>
+                    <div class="vi-counter azul">
+                        <span class="vi-counter-num" id="cnt-total">0</span>
+                        <span class="vi-counter-lbl">Total</span>
+                    </div>
+                </div>
+        
+                <!-- Lista de alertas -->
+                <div class="vi-lista" id="alertas-full-list">
+                    <div class="alerta-empty">Cargando alertas...</div>
+                </div>
+        
+            </div>
+        </div>
+        
+        <!-- ── VISTA: REPORTES / EVENTOS ── -->
+        <div class="view" id="view-reportes">
+            <div class="view-inner">
+        
+                <!-- Encabezado -->
+                <div class="vi-header">
+                    <div class="vi-title">📋 Eventos Registrados</div>
+                    <div class="vi-filtros">
+                        <select class="vi-select" id="filtro-nivel-evento" onchange="filtrarEventos()">
+                            <option value="todos">Todos los niveles</option>
+                            <option value="alto">🔴 Alto</option>
+                            <option value="medio">🟡 Medio</option>
+                            <option value="bajo">🟢 Bajo</option>
+                        </select>
+                        <button class="vi-btn-refresh" onclick="cargarEventos()">↺ Actualizar</button>
+                    </div>
+                </div>
+        
+                <!-- Contadores rápidos -->
+                <div class="vi-counters">
+                    <div class="vi-counter rojo">
+                        <span class="vi-counter-num" id="ev-cnt-alto">0</span>
+                        <span class="vi-counter-lbl">Alto Riesgo</span>
+                    </div>
+                    <div class="vi-counter ambar">
+                        <span class="vi-counter-num" id="ev-cnt-medio">0</span>
+                        <span class="vi-counter-lbl">Medio Riesgo</span>
+                    </div>
+                    <div class="vi-counter verde">
+                        <span class="vi-counter-num" id="ev-cnt-bajo">0</span>
+                        <span class="vi-counter-lbl">Bajo Riesgo</span>
+                    </div>
+                    <div class="vi-counter azul">
+                        <span class="vi-counter-num" id="ev-cnt-total">0</span>
+                        <span class="vi-counter-lbl">Total Eventos</span>
+                    </div>
+                </div>
+        
+                <!-- Grid de eventos -->
+                <div class="eventos-grid" id="cuadriculaEventos">
+                    <div class="alerta-empty" style="grid-column:1/-1">Cargando eventos...</div>
+                </div>
+        
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+
+            <!-- ── VISTA: MONITOREO EN VIVO ── -->
+            <div class="view active" id="view-monitoreo">
+                <!-- Cámara Grid -->
+                <div class="cam-grid-area">
+                    <div class="cam-toolbar">
+                        <h3>📹 Monitoreo en Vivo</h3>
+                        <button class="cam-layout-btn active" onclick="cambiarLayout(1, this)" title="1 cámara">⬛</button>
+                        <button class="cam-layout-btn" onclick="cambiarLayout(4, this)" title="4 cámaras">⊞</button>
+                        <button class="cam-layout-btn" onclick="cambiarLayout(9, this)" title="9 cámaras">⊟</button>
+                        <div class="cam-controles">
+                            <button class="btn-start" onclick="iniciarVigilancia()">▶ Iniciar Vigilancia</button>
+                            <button class="btn-stop" onclick="detenerVigilancia()">⏹ Detener</button>
+                        </div>
+                    </div>
+
+                    <!-- Grid de cámaras -->
+                    <div class="cam-grid layout-1" id="cam-grid">
+                        <!-- CAM 1 — Stream principal -->
+                        <div class="cam-cell cam-main" onclick="expandirCamara(1)">
+                            <img id="transmisionVideo" class="cam-feed" src="" alt="" style="display:none">
+                            <div class="cam-placeholder" id="cam-placeholder-1">
+                                <span class="cam-placeholder-icon">📷</span>
+                                <span>CAM 1 — En espera</span>
+                            </div>
+                            <span class="cam-label">CAM 1</span>
+                            <span class="cam-status detenida" id="cam-status-1"></span>
+                            <span class="cam-risk verde" id="cam-risk-1">Normal</span>
+                            <span class="cam-expand" onclick="event.stopPropagation(); expandirCamara(1)">⛶</span>
+                        </div>
+                        <!-- CAM 2–9 estáticas (simuladas) -->
+                        <div class="cam-cell" id="cam-2" style="display:none" onclick="expandirCamara(2)">
+                            <div class="cam-placeholder"><span class="cam-placeholder-icon">📷</span><span>CAM 2</span></div>
+                            <span class="cam-label">CAM 2</span>
+                            <span class="cam-status activa"></span>
+                            <span class="cam-risk verde">Normal</span>
+                            <span class="cam-expand">⛶</span>
+                        </div>
+                        <div class="cam-cell" id="cam-3" style="display:none" onclick="expandirCamara(3)">
+                            <div class="cam-placeholder"><span class="cam-placeholder-icon">📷</span><span>CAM 3</span></div>
+                            <span class="cam-label">CAM 3</span>
+                            <span class="cam-status activa"></span>
+                            <span class="cam-risk amarillo">Alerta</span>
+                            <span class="cam-expand">⛶</span>
+                        </div>
+                        <div class="cam-cell" id="cam-4" style="display:none" onclick="expandirCamara(4)">
+                            <div class="cam-placeholder"><span class="cam-placeholder-icon">📷</span><span>CAM 4</span></div>
+                            <span class="cam-label">CAM 4</span>
+                            <span class="cam-status activa"></span>
+                            <span class="cam-risk verde">Normal</span>
+                            <span class="cam-expand">⛶</span>
+                        </div>
+                        <div class="cam-cell" id="cam-5" style="display:none">
+                            <div class="cam-placeholder"><span class="cam-placeholder-icon">📷</span><span>CAM 5</span></div>
+                            <span class="cam-label">CAM 5</span>
+                            <span class="cam-status detenida"></span>
+                            <span class="cam-risk verde">Normal</span>
+                        </div>
+                        <div class="cam-cell" id="cam-6" style="display:none">
+                            <div class="cam-placeholder"><span class="cam-placeholder-icon">📷</span><span>CAM 6</span></div>
+                            <span class="cam-label">CAM 6</span>
+                            <span class="cam-status activa"></span>
+                            <span class="cam-risk rojo">Crítico</span>
+                        </div>
+                        <div class="cam-cell" id="cam-7" style="display:none">
+                            <div class="cam-placeholder"><span class="cam-placeholder-icon">📷</span><span>CAM 7</span></div>
+                            <span class="cam-label">CAM 7</span>
+                            <span class="cam-status activa"></span>
+                            <span class="cam-risk verde">Normal</span>
+                        </div>
+                        <div class="cam-cell" id="cam-8" style="display:none">
+                            <div class="cam-placeholder"><span class="cam-placeholder-icon">📷</span><span>CAM 8</span></div>
+                            <span class="cam-label">CAM 8</span>
+                            <span class="cam-status activa"></span>
+                            <span class="cam-risk amarillo">Alerta</span>
+                        </div>
+                        <div class="cam-cell" id="cam-9" style="display:none">
+                            <div class="cam-placeholder"><span class="cam-placeholder-icon">📷</span><span>CAM 9</span></div>
+                            <span class="cam-label">CAM 9</span>
+                            <span class="cam-status detenida"></span>
+                            <span class="cam-risk verde">Normal</span>
+                        </div>
+                    </div>
+
+                    <!-- Barra de estado inferior -->
+                    <div class="cam-info-bar">
+                        <span>Estado: <strong id="estadoTransmision">Detenido</strong></span>
+                        <span>Frames: <strong id="contadorFrames">0</strong></span>
+                        <span>Personas: <strong id="contadorPersonas">0</strong></span>
+                        <span id="infoSistema" style="margin-left:auto; color: var(--text-muted)">Esperando inicio...</span>
+                    </div>
+                </div>
+
+                <!-- Right Panel -->
+                <div class="right-panel">
+                    <!-- Stats -->
+                    <div class="rp-section">
+                        <div class="rp-header"><span class="rp-icon">📊</span> Estadísticas</div>
+                        <div class="stats-mini">
+                            <div class="stat-mini">
+                                <div class="stat-mini-val" id="rp-frames">0</div>
+                                <div class="stat-mini-lbl">Frames</div>
+                            </div>
+                            <div class="stat-mini">
+                                <div class="stat-mini-val" id="rp-personas">0</div>
+                                <div class="stat-mini-lbl">Personas</div>
+                            </div>
+                            <div class="stat-mini">
+                                <div class="stat-mini-val" id="contadorAlertas">0</div>
+                                <div class="stat-mini-lbl">Alertas</div>
+                            </div>
+                            <div class="stat-mini">
+                                <div class="stat-mini-val" id="estadoSistema">⏸</div>
+                                <div class="stat-mini-lbl">Estado</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alertas activas -->
+                    <div class="rp-section" style="max-height:260px">
+                        <div class="rp-header"><span class="rp-icon">🚨</span> Alertas Activas</div>
+                        <div class="alertas-list" id="contenedorAlertas">
+                            <div class="alerta-empty">Esperando alertas...</div>
+                        </div>
+                    </div>
+
+                    <!-- Últimas detecciones -->
+                    <div class="rp-section">
+                        <div class="rp-header"><span class="rp-icon">👤</span> Últimas Detecciones</div>
+                        <div class="detecciones-list" id="detecciones-list">
+                            <div class="alerta-empty">Sin detecciones</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── VISTA: ALERTAS ── -->
+            <div class="view" id="view-alertas">
+                <div style="flex:1; padding:18px; overflow-y:auto;">
+                    <div class="view-title">🚨 Alertas Inteligentes</div>
+                    <div id="alertas-full-list" style="display:flex; flex-direction:column; gap:10px;">
+                        <div class="alerta-empty">Cargando alertas...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── VISTA: EVENTOS/REPORTES ── -->
+            <div class="view" id="view-reportes">
+                <div style="flex:1; padding:18px; overflow-y:auto;">
+                    <div class="view-title">📋 Eventos Registrados en Base de Datos</div>
+                    <div class="eventos-grid" id="cuadriculaEventos">
+                        <div class="alerta-empty" style="grid-column:1/-1">Cargando eventos...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── VISTAS PLACEHOLDER ── -->
+            <div class="view" id="view-facial">
+                <div class="placeholder-view">
+                    <span class="ph-icon">👤</span>
+                    <h3>Reconocimiento Facial</h3>
+                    <p>Módulo en desarrollo — Sprint 5</p>
+                </div>
+            </div>
+            <div class="view" id="view-patrones">
+                <div class="placeholder-view">
+                    <span class="ph-icon">📊</span>
+                    <h3>Análisis de Patrones</h3>
+                    <p>Módulo en desarrollo — Sprint 3</p>
+                </div>
+            </div>
+            <!-- ── VISTA: GESTIÓN DE CÁMARAS ── -->
+            <div class="view" id="view-camaras">
+                <div class="gc-wrapper">
+            
+                    <!-- HEADER -->
+                    <div class="gc-header">
+                        <div class="gc-header-left">
+                            <div class="gc-title">🎥 Gestión de Cámaras</div>
+                            <div class="gc-subtitle">Administración técnica de dispositivos de vigilancia</div>
+                        </div>
+                        <div class="gc-header-actions">
+                            <button class="gc-btn gc-btn-secondary" onclick="gcExportarCSV()">⬇ Exportar CSV</button>
+                            <button class="gc-btn gc-btn-primary" onclick="gcAbrirModalAgregar()">＋ Agregar Cámara</button>
+                        </div>
+                    </div>
+            
+                    <!-- KPI STRIP -->
+                    <div class="gc-kpi-strip">
+                        <div class="gc-kpi-card gc-kpi-verde">
+                            <div class="gc-kpi-icon">🟢</div>
+                            <div>
+                                <div class="gc-kpi-num" id="gc-kpi-activas">0</div>
+                                <div class="gc-kpi-lbl">Activas</div>
+                            </div>
+                        </div>
+                        <div class="gc-kpi-card gc-kpi-ambar">
+                            <div class="gc-kpi-icon">🟡</div>
+                            <div>
+                                <div class="gc-kpi-num" id="gc-kpi-alerta">0</div>
+                                <div class="gc-kpi-lbl">En Alerta</div>
+                            </div>
+                        </div>
+                        <div class="gc-kpi-card gc-kpi-rojo">
+                            <div class="gc-kpi-icon">🔴</div>
+                            <div>
+                                <div class="gc-kpi-num" id="gc-kpi-offline">0</div>
+                                <div class="gc-kpi-lbl">Offline</div>
+                            </div>
+                        </div>
+                        <div class="gc-kpi-card gc-kpi-azul">
+                            <div class="gc-kpi-icon">📷</div>
+                            <div>
+                                <div class="gc-kpi-num" id="gc-kpi-total">0</div>
+                                <div class="gc-kpi-lbl">Total</div>
+                            </div>
+                        </div>
+                        <div class="gc-kpi-card gc-kpi-cyan">
+                            <div class="gc-kpi-icon">📡</div>
+                            <div>
+                                <div class="gc-kpi-num" id="gc-kpi-ip">0</div>
+                                <div class="gc-kpi-lbl">Tipo IP</div>
+                            </div>
+                        </div>
+                        <div class="gc-kpi-card gc-kpi-morado">
+                            <div class="gc-kpi-icon">📼</div>
+                            <div>
+                                <div class="gc-kpi-num" id="gc-kpi-analogica">0</div>
+                                <div class="gc-kpi-lbl">Analógicas</div>
+                            </div>
+                        </div>
+                    </div>
+            
+                    <!-- BARRA DE HERRAMIENTAS -->
+                    <div class="gc-toolbar">
+                        <div class="gc-search-wrap">
+                            <span class="gc-search-icon">🔍</span>
+                            <input type="text" class="gc-search" id="gc-search"
+                                placeholder="Buscar por ID, ubicación, zona..."
+                                oninput="gcFiltrar()">
+                        </div>
+                        <select class="gc-select" id="gc-filtro-estado" onchange="gcFiltrar()">
+                            <option value="todos">Todos los estados</option>
+                            <option value="activa">🟢 Activa</option>
+                            <option value="alerta">🟡 Alerta</option>
+                            <option value="offline">🔴 Offline</option>
+                        </select>
+                        <select class="gc-select" id="gc-filtro-tipo" onchange="gcFiltrar()">
+                            <option value="todos">Todos los tipos</option>
+                            <option value="IP">📡 IP</option>
+                            <option value="Analógica">📼 Analógica</option>
+                        </select>
+                        <select class="gc-select" id="gc-filtro-zona" onchange="gcFiltrar()">
+                            <option value="todos">Todas las zonas</option>
+                            <option value="Chapinero">Chapinero</option>
+                            <option value="Kennedy">Kennedy</option>
+                            <option value="Santa Fe">Santa Fe</option>
+                            <option value="Suba">Suba</option>
+                            <option value="Usaquén">Usaquén</option>
+                            <option value="Bosa">Bosa</option>
+                            <option value="Engativá">Engativá</option>
+                            <option value="Miramar">Miramar</option>
+                        </select>
+                        <button class="gc-btn gc-btn-ghost" onclick="gcActualizar()" title="Refrescar tabla">↺ Actualizar</button>
+                    </div>
+            
+                    <!-- TABLA -->
+                    <div class="gc-table-container">
+                        <table class="gc-table">
+                            <thead>
+                                <tr>
+                                    <th class="gc-th-sort" onclick="gcOrdenar('id')">ID <span class="gc-sort-icon" id="sort-id">↕</span></th>
+                                    <th class="gc-th-sort" onclick="gcOrdenar('ubicacion')">Ubicación <span class="gc-sort-icon" id="sort-ubicacion">↕</span></th>
+                                    <th class="gc-th-sort" onclick="gcOrdenar('zona')">Zona <span class="gc-sort-icon" id="sort-zona">↕</span></th>
+                                    <th class="gc-th-sort" onclick="gcOrdenar('estado')">Estado <span class="gc-sort-icon" id="sort-estado">↕</span></th>
+                                    <th class="gc-th-sort" onclick="gcOrdenar('resolucion')">Resolución <span class="gc-sort-icon" id="sort-resolucion">↕</span></th>
+                                    <th class="gc-th-sort" onclick="gcOrdenar('tipo')">Tipo <span class="gc-sort-icon" id="sort-tipo">↕</span></th>
+                                    <th class="gc-th-sort" onclick="gcOrdenar('ultimaConexion')">Última Conexión <span class="gc-sort-icon" id="sort-ultimaConexion">↕</span></th>
+                                    <th>Dirección IP</th>
+                                    <th class="gc-th-acciones">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gc-tbody">
+                                <tr><td colspan="9" class="gc-empty-row">Cargando dispositivos...</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="gc-table-footer">
+                            <span id="gc-count-label">Mostrando 0 cámaras</span>
+                            <div class="gc-pagination" id="gc-pagination"></div>
+                        </div>
+                    </div>
+            
+                </div>
+            </div>
+            
+            <!-- ══ MODAL: AGREGAR / EDITAR CÁMARA ══ -->
+            <div class="gc-modal-backdrop" id="gc-modal" style="display:none">
+                <div class="gc-modal-box">
+                    <div class="gc-modal-header">
+                        <span id="gc-modal-titulo">➕ Agregar Cámara</span>
+                        <button class="gc-modal-close" onclick="gcCerrarModal()">✕</button>
+                    </div>
+                    <div class="gc-modal-body">
+                        <div class="gc-form-grid">
+                            <div class="gc-form-group">
+                                <label class="gc-label">ID Cámara *</label>
+                                <input type="text" class="gc-input" id="gc-form-id" placeholder="Ej: 1006">
+                            </div>
+                            <div class="gc-form-group">
+                                <label class="gc-label">Tipo *</label>
+                                <select class="gc-input" id="gc-form-tipo">
+                                    <option value="IP">📡 IP</option>
+                                    <option value="Analógica">📼 Analógica</option>
+                                </select>
+                            </div>
+                            <div class="gc-form-group gc-span2">
+                                <label class="gc-label">Ubicación física *</label>
+                                <input type="text" class="gc-input" id="gc-form-ubicacion" placeholder="Ej: Carrera 13 #45-20">
+                            </div>
+                            <div class="gc-form-group">
+                                <label class="gc-label">Zona / Localidad *</label>
+                                <select class="gc-input" id="gc-form-zona">
+                                    <option>Chapinero</option><option>Kennedy</option>
+                                    <option>Santa Fe</option><option>Suba</option>
+                                    <option>Usaquén</option><option>Bosa</option>
+                                    <option>Engativá</option><option>Miramar</option>
+                                </select>
+                            </div>
+                            <div class="gc-form-group">
+                                <label class="gc-label">Resolución</label>
+                                <select class="gc-input" id="gc-form-resolucion">
+                                    <option>720p</option>
+                                    <option>1080p</option>
+                                    <option>4K</option>
+                                </select>
+                            </div>
+                            <div class="gc-form-group">
+                                <label class="gc-label">Dirección IP</label>
+                                <input type="text" class="gc-input" id="gc-form-ip" placeholder="192.168.1.XX">
+                            </div>
+                            <div class="gc-form-group">
+                                <label class="gc-label">Puerto RTSP</label>
+                                <input type="text" class="gc-input" id="gc-form-puerto" placeholder="554">
+                            </div>
+                            <div class="gc-form-group gc-span2">
+                                <label class="gc-label">Observaciones</label>
+                                <textarea class="gc-input gc-textarea" id="gc-form-obs"
+                                        placeholder="Notas adicionales sobre el dispositivo..."></textarea>
+                            </div>
+                        </div>
+                        <div class="gc-form-error" id="gc-form-error" style="display:none"></div>
+                    </div>
+                    <div class="gc-modal-footer">
+                        <button class="gc-btn gc-btn-ghost" onclick="gcCerrarModal()">Cancelar</button>
+                        <button class="gc-btn gc-btn-primary" id="gc-modal-btn-guardar" onclick="gcGuardarCamara()">💾 Guardar</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ══ MODAL: CONFIRMAR DESACTIVAR ══ -->
+            <div class="gc-modal-backdrop" id="gc-modal-confirm" style="display:none">
+                <div class="gc-modal-box" style="max-width:420px">
+                    <div class="gc-modal-header">
+                        <span>⚠️ Confirmar acción</span>
+                        <button class="gc-modal-close"
+                                onclick="document.getElementById('gc-modal-confirm').style.display='none'">✕</button>
+                    </div>
+                    <div class="gc-modal-body">
+                        <p id="gc-confirm-msg" style="color:var(--text-primary); line-height:1.6"></p>
+                    </div>
+                    <div class="gc-modal-footer">
+                        <button class="gc-btn gc-btn-ghost"
+                                onclick="document.getElementById('gc-modal-confirm').style.display='none'">Cancelar</button>
+                        <button class="gc-btn gc-btn-danger" id="gc-confirm-btn">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ══ MODAL: DETALLE CÁMARA ══ -->
+            <div class="gc-modal-backdrop" id="gc-modal-detalle" style="display:none">
+                <div class="gc-modal-box" style="max-width:520px">
+                    <div class="gc-modal-header">
+                        <span id="gc-detalle-titulo">📷 Detalle de Cámara</span>
+                        <button class="gc-modal-close"
+                                onclick="document.getElementById('gc-modal-detalle').style.display='none'">✕</button>
+                    </div>
+                    <div class="gc-modal-body" id="gc-detalle-body"></div>
+                    <div class="gc-modal-footer">
+                        <button class="gc-btn gc-btn-ghost"
+                                onclick="document.getElementById('gc-modal-detalle').style.display='none'">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="view" id="view-usuarios">
+                <div class="placeholder-view">
+                    <span class="ph-icon">👥</span>
+                    <h3>Gestión de Usuarios</h3>
+                    <p>Módulo en desarrollo — Sprint 4</p>
+                </div>
+            </div>
+            <div class="view" id="view-control">
+                <div style="flex:1; padding:18px; overflow-y:auto; display:flex; flex-direction:column; gap:14px;">
+                
+                    <div style="display:flex; align-items:center; gap:14px">
+                    <div class="view-title" style="margin:0">🏛️ Centro de Control Estratégico</div>
+                    <div class="ce-live-badge">
+                        <div class="ce-live-dot"></div>
+                        EN VIVO
+                    </div>
+                    </div>
+                
+                    <div class="ce-grid">
+                
+                    <!-- KPIs -->
+                    <div class="ce-kpi-strip">
+                
+                        <div class="ce-kpi-card azul" id="kpi-camaras">
+                        <div class="ce-kpi-label">📷 Cámaras Activas</div>
+                        <div class="ce-kpi-row">
+                            <div>
+                            <div class="ce-kpi-val">—</div>
+                            <div class="ce-kpi-sub">— hoy</div>
+                            </div>
+                            <svg id="spark-camaras" class="ce-spark" width="80" height="28"></svg>
+                        </div>
+                        </div>
+                
+                        <div class="ce-kpi-card rojo" id="kpi-alertas">
+                        <div class="ce-kpi-label">🚨 Alertas Críticas</div>
+                        <div class="ce-kpi-row">
+                            <div>
+                            <div class="ce-kpi-val">—</div>
+                            <div class="ce-kpi-sub">— hoy</div>
+                            </div>
+                            <svg id="spark-alertas" class="ce-spark" width="80" height="28"></svg>
+                        </div>
+                        </div>
+                
+                        <div class="ce-kpi-card ambar" id="kpi-sosp">
+                        <div class="ce-kpi-label">🕵️ Sospechosos Hoy</div>
+                        <div class="ce-kpi-row">
+                            <div>
+                            <div class="ce-kpi-val">—</div>
+                            <div class="ce-kpi-sub">— hoy</div>
+                            </div>
+                            <svg id="spark-sosp" class="ce-spark" width="80" height="28"></svg>
+                        </div>
+                        </div>
+                
+                        <div class="ce-kpi-card morado" id="kpi-zonas">
+                        <div class="ce-kpi-label">⚠️ Zonas Riesgo Alto</div>
+                        <div class="ce-kpi-row">
+                            <div>
+                            <div class="ce-kpi-val">—</div>
+                            <div class="ce-kpi-sub">— hoy</div>
+                            </div>
+                            <svg id="spark-zonas" class="ce-spark" width="80" height="28"></svg>
+                        </div>
+                        </div>
+                
+                    </div>
+                
+                    <!-- Mapa de zonas -->
+                    <div class="ce-panel">
+                        <div class="ce-panel-header">🗺️ Mapa de Riesgo Urbano</div>
+                        <div class="ce-panel-body mapa-container">
+                            <div id="mapa"></div>
+                        </div>
+                    </div>
+                
+                    <!-- Alertas recientes -->
+                    <div class="ce-panel">
+                        <div class="ce-panel-header">🔔 Alertas Recientes</div>
+                        <div class="ce-panel-body" style="overflow-y:auto; max-height:300px">
+                        <div id="ce-alertas-lista"></div>
+                        </div>
+                    </div>
+                
+                    <!-- Áreas de riesgo -->
+                    <div class="ce-panel">
+                        <div class="ce-panel-header">
+                        📍 Áreas de Riesgo Urbano
+                        <span style="margin-left:auto; font-family:'Share Tech Mono',monospace;
+                                    font-size:0.9em; color:var(--text-primary)" id="riesgo-total">—</span>
+                        </div>
+                        <div class="ce-panel-body">
+                        <div id="barra-criticas"></div>
+                        <div id="barra-medias"></div>
+                        <div id="barra-bajas"></div>
+                        </div>
+                    </div>
+                
+                    <!-- Dona incidentes -->
+                    <div class="ce-panel">
+                        <div class="ce-panel-header">🥧 Incidentes por Tipo</div>
+                        <div class="ce-panel-body">
+                        <div class="ce-dona-wrap">
+                            <svg id="dona-incidentes" viewBox="0 0 120 120" width="120" height="120"
+                                style="flex-shrink:0"></svg>
+                            <div id="dona-leyenda" style="flex:1"></div>
+                        </div>
+                        </div>
+                    </div>
+       
+                    </div>
+                 
+                </div>
+                
+            </div>
+
+        </div><!-- /main-content -->
+    </div><!-- /app-body -->
+</div><!-- /app -->
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  MODAL CÁMARA EXPANDIDA                    -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="cam-modal" id="cam-modal">
+    <div class="cam-modal-inner">
+        <div class="cam-modal-header">
+            <span class="cam-label" style="position:static; background:var(--bg-card); border:1px solid var(--border); border-radius:5px; padding:3px 10px; font-size:0.9em;">CAM <span id="modal-cam-num">1</span></span>
+            <h3>Vista Expandida</h3>
+            <div class="cam-status activa" id="modal-cam-status"></div>
+            <button class="cam-modal-close" onclick="cerrarModal()">✕ Cerrar</button>
+        </div>
+        <div class="cam-modal-body">
+            <div class="cam-modal-video">
+                <img id="modal-video-feed" src="" alt="Sin señal" style="max-height:70vh;">
+                <div id="modal-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; color:var(--text-muted);">
+                    <span style="font-size:3em; opacity:0.3">📷</span>
+                    <span>Sin señal de video</span>
+                </div>
+            </div>
+            <div class="cam-modal-side">
+                <div>
+                    <div class="rp-header" style="padding:0 0 10px; border-bottom:1px solid var(--border); margin-bottom:10px;">🎯 Acciones</div>
+                    <div class="modal-actions">
+                        <button class="btn-modal-action btn-seguimiento" onclick="activarSeguimiento()">👁 Activar Seguimiento</button>
+                        <button class="btn-modal-action btn-alerta" onclick="generarAlertaManual()">🚨 Generar Alerta</button>
+                        <button class="btn-modal-action btn-evidencia" onclick="guardarEvidencia()">💾 Guardar Evidencia</button>
+                    </div>
+                </div>
+                <div>
+                    <div class="rp-header" style="padding:0 0 10px; border-bottom:1px solid var(--border); margin-bottom:10px;">🔍 Coincidencias</div>
+                    <div id="modal-coincidencias" style="font-size:0.82em; color:var(--text-muted);">
+                        Sin coincidencias detectadas
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/aplicacion.js"></script>
+<script>
+    document.getElementById('btn-login').addEventListener('click', iniciarSesion);
+    document.getElementById('login-pass').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') iniciarSesion();
+    });
+    document.getElementById('login-user').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('login-pass').focus();
+    });
+</script>
+</body>
+</html>

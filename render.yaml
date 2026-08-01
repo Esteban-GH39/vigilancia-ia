@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: vigilancia-ia-demo
+    env: docker
+    plan: free
+    envVars:
+      - key: VIDEO_SOURCE
+        value: media/demo_video.mp4
+      - key: ROTAR_FRAME_180
+        value: "false"
+      - key: LOOP_VIDEO_DEMO
+        value: "true"
+    healthCheckPath: /api/estado
