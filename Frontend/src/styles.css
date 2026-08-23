@@ -1,0 +1,285 @@
+:root {
+    --bg-deep: #0d1b2e;
+    --bg-panel: #132238;
+    --bg-card: #1a2f4a;
+    --bg-card2: #1e3554;
+    --acento: #3b82f6;
+    --texto: #e5edf7;
+    --riesgo-bajo: #22c55e;
+    --riesgo-medio: #eab308;
+    --riesgo-alto: #ef4444;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Exo 2', sans-serif;
+    background: var(--bg-deep);
+    color: var(--texto);
+}
+
+.login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-box {
+    background: var(--bg-panel);
+    padding: 2.5rem;
+    border-radius: 12px;
+    width: 320px;
+    text-align: center;
+}
+
+.login-logo {
+    font-size: 2.5rem;
+}
+
+.login-box h2 {
+    font-family: 'Rajdhani', sans-serif;
+    margin: 0.5rem 0 0.25rem;
+}
+
+.login-sub {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-bottom: 1.5rem;
+}
+
+.login-field {
+    text-align: left;
+    margin-bottom: 1rem;
+}   
+
+.login-field label {
+    display: block;
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.8;
+}
+
+.login-field input {
+    width: 100%;
+    padding: 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--bg-card2);
+    background: var(--bg-card);
+    color: var(--texto);
+    font-family: 'Exo 2', sans-serif;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 0.7rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--acento);
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.btn-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.login-error {
+    color: var(--riesgo-alto);
+    font-size: 0.8rem;
+    margin-top: 0.75rem;
+}
+
+.login-aviso {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-top: 1.5rem;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--bg-panel);
+}
+
+.topbar-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.2rem;
+    flex: 1;
+}
+
+.topbar-title span {
+    color: var(--acento);
+}
+
+.topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+}
+
+.topbar-badge {
+    background: var(--bg-card);
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+}
+
+.btn-logout {
+    background: var(--bg-card);
+    border: none;
+    color: var(--texto);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.dashboard-body {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.dashboard-principal {
+    flex: 1;
+}
+
+.dashboard-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.btn-iniciar,
+.btn-detener {
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-iniciar {
+    background: var(--riesgo-bajo);
+    color: #06280f;
+}
+
+.btn-detener {
+    background: var(--riesgo-alto);
+    color: #2b0505;
+}
+
+.mosaico-camaras {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.tarjeta-camara {
+    background: var(--bg-card);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.tarjeta-camara-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+}
+
+.estado-punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    align-self: center;
+}
+
+.estado-punto.activo {
+    background: var(--riesgo-bajo);
+}
+
+.estado-punto.inactivo {
+    background: #555;
+}
+
+.tarjeta-camara-video {
+    aspect-ratio: 16 / 9;
+    background: #05070c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tarjeta-camara-video img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tarjeta-camara-espera {
+    opacity: 0.5;
+    font-size: 0.85rem;
+}
+
+.dashboard-lateral {
+    width: 280px;
+}
+
+.panel-alertas {
+    background: var(--bg-panel);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.panel-alertas h3 {
+    font-family: 'Rajdhani', sans-serif;
+    margin-top: 0;
+}
+
+.panel-alertas ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.alerta {
+    background: var(--bg-card);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    border-left: 3px solid var(--riesgo-medio);
+}
+
+.alerta-alto {
+    border-left-color: var(--riesgo-alto);
+}
+
+.alerta-medio {
+    border-left-color: var(--riesgo-medio);
+}
+
+.alerta-bajo {
+    border-left-color: var(--riesgo-bajo);
+}
+
+.panel-alertas-vacio {
+    opacity: 0.5;
+    font-size: 0.8rem;
+}
