@@ -4,7 +4,7 @@ Sistema inteligente de vigilancia en tiempo real que combina detección de movim
 detección de objetos con YOLOv8 y análisis de comportamiento (merodeo, velocidad
 sospechosa) para generar alertas automáticas, con un dashboard web en vivo.
 
-Proyecto desarrollado para la asignatura **Práctica de Ingeniería II** — Facultad de
+Proyecto desarrollado para la asignatura **Práctica de Ingeniería IV** — Facultad de
 Ingeniería y Ciencias Básicas, **Universidad Central**.
 
 **Autores:**
