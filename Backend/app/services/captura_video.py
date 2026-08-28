@@ -4,7 +4,7 @@ import sys
 import platform
 from datetime import datetime
 sys.path.append('..')
-import configuracion
+import backend.configuracion as configuracion
 
 class CapturaVideo:
 

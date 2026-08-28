@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import sys
 sys.path.append('..')
-import configuracion
+import backend.configuracion as configuracion
 
 class DetectorMovimiento:
 
