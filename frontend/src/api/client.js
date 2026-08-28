@@ -42,6 +42,23 @@ function obtenerToken() {
     crearCamara: (datos) =>
         peticion('/camaras/', { method: 'POST', body: JSON.stringify(datos) }),
 
+    subirVideoCamara: async (formData) => {
+        const token = obtenerToken();
+        const respuesta = await fetch(`${BASE_API}/camaras/subir-video`, {
+            method: 'POST',
+            headers: {
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+
+            body: formData,
+        });
+        if (!respuesta.ok) {
+            const detalle = await respuesta.json().catch(() => ({}));
+            throw new Error(detalle.detail || 'Error subiendo el video');
+        }
+        return respuesta.json();
+    },
+
     editarCamara: (idCamara, datos) =>
         peticion(`/camaras/${idCamara}`, { method: 'PUT', body: JSON.stringify(datos) }),
 
@@ -51,4 +68,6 @@ function obtenerToken() {
     listarEventos: (limite = 50) => peticion(`/eventos/?limite=${limite}`),
 
     mapaCalor: () => peticion('/analisis/mapa-calor'),
+
+    listarLocalidades: () => peticion('/localidades/'),
 };

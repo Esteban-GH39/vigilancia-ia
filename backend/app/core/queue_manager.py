@@ -6,7 +6,7 @@ from typing import Optional
 class SesionCamara:
     id_camara: str
     corriendo: bool = False
-    frames_oricesadis: int = 0
+    frames_procesados: int = 0
     alertas_generadas: int = 0
     personas_detectadas: int = 0
 
@@ -18,7 +18,6 @@ class SesionCamara:
 
 
 class GestorSesiones:
-    # Registro central de sesiones de cámara activas
 
     def __init__(self):
         self._sesiones: dict[str, SesionCamara] = {}
