@@ -3,7 +3,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import camaras, websocket, eventos, alertas, auth
+from app.db import modelos_camara
+
+from app.routers import camaras, websocket, eventos, alertas, auth, analisis
 from app.core.config import HOST_API, PUERTO_API
 
 app = FastAPI (
@@ -25,6 +27,7 @@ app.include_router(camaras.router)
 app.include_router(eventos.router)
 app.include_router(alertas.router)
 app.include_router(websocket.router)
+app.include_router(analisis.router)
 
 @app.get("/")
 async def raiz():

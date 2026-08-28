@@ -1,4 +1,3 @@
-from app.db.base_datos import guardar_evento, obtener_eventos_recientes
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -8,7 +7,7 @@ import configuracion
 Base = declarative_base()
 
 class Evento(Base):
-    # Modelo de Evento de Seguridad
+
     __tablename__ = "eventos"
     
     id = Column(Integer, primary_key=True)
@@ -23,7 +22,7 @@ class Evento(Base):
     alerta_enviada = Column(Boolean, default=False)
     
     def a_diccionario(self):
-        # Convertir evento a diccionario
+
         return {
             "id": self.id,
             "marca_tiempo": self.marca_tiempo.isoformat(),
@@ -38,7 +37,7 @@ class Evento(Base):
         }
 
 class PersonaRastreada(Base):
-    # Modelo de Persona Rastreada en el Sistema
+
     __tablename__ = "personas_rastreadas"
     
     id = Column(Integer, primary_key=True)
@@ -51,13 +50,12 @@ class PersonaRastreada(Base):
     tipo_comportamiento = Column(String(50))
     ruta_miniatura = Column(String(200))
 
-# Crear motor y sesión de base de datos
 motor = create_engine(configuracion.URL_BASE_DATOS)
 Base.metadata.create_all(motor)
 FabricaSesion = sessionmaker(bind=motor)
 
 def obtener_sesion():
-    # Obtener sesión de base de datos
+
     sesion = FabricaSesion()
     try:
         yield sesion
@@ -65,7 +63,7 @@ def obtener_sesion():
         sesion.close()
 
 def guardar_evento(datos_evento):
-    # Guardar evento en la base de datos
+
     sesion = FabricaSesion()
     try:
         evento = Evento(**datos_evento)
@@ -78,7 +76,7 @@ def guardar_evento(datos_evento):
         sesion.close()
 
 def obtener_eventos_recientes(limite=10):
-    # Obtener eventos recientes de la base de datos
+
     sesion = FabricaSesion()
     try:
         eventos = sesion.query(Evento).order_by(
@@ -89,7 +87,7 @@ def obtener_eventos_recientes(limite=10):
         sesion.close()
 
 def obtener_estadisticas_eventos():
-    # Obtener estadísticas generales de eventos
+
     sesion = FabricaSesion()
     try:
         total_eventos = sesion.query(Evento).count()

@@ -1,20 +1,35 @@
 import { useState } from 'react';
-import { api } from '../api/client';
-import TarjetaCamara from '../components/TarjetaCamara';
+import Sidebar from '../components/Sidebar';
+import MosaicoCamaras from '../components/MosaicoCamaras';
+import MapaCalor from '../components/MapaCalor';
 import PanelAlertas from '../components/PanelAlertas';
-
-const CAMARAS_DEMO = [{ id: 'cam1', nombre: 'CAM 1' }];
+import AlertasInteligentes from '../components/AlertasInteligentes';
+import VistaPendiente from '../components/VistaPendiente';
 
 export default function Dashboard({ sesion, onCerrarSesion }) {
-    const [vigilanciaActiva, setVigilanciaActiva] = useState(false);
+    const [vistaActiva, setVistaActiva] = useState('monitoreo');
 
-    async function alternarVigilancia() {
-        if (vigilanciaActiva) {
-        await api.detenerCamara('cam1');
-        } else {
-        await api.iniciarCamara('cam1');
+    function renderizarVistaPrincipal() {
+        switch (vistaActiva) {
+        case 'monitoreo':
+            return <MosaicoCamaras />;
+        case 'alertas':
+            return <AlertasInteligentes />;
+        case 'patrones':
+            return <MapaCalor />;
+        case 'camaras':
+            return <MosaicoCamaras />; // misma gestión CRUD, distinto punto de entrada del menú
+        case 'control':
+            return <VistaPendiente titulo="Centro de Control Estratégico" icono="🏛️" sprintSugerido="Sprint 26 - Dashboard completo" />;
+        case 'facial':
+            return <VistaPendiente titulo="Reconocimiento Facial" icono="👤" sprintSugerido="Sprint 23 - Reconocimiento facial (HU11)" />;
+        case 'reportes':
+            return <VistaPendiente titulo="Reportes" icono="📋" sprintSugerido="Sprint 27 - Reportes (HU20)" />;
+        case 'usuarios':
+            return <VistaPendiente titulo="Gestión de Usuarios" icono="👥" sprintSugerido="RF-19 en adelante" />;
+        default:
+            return null;
         }
-        setVigilanciaActiva(!vigilanciaActiva);
     }
 
     return (
@@ -34,29 +49,15 @@ export default function Dashboard({ sesion, onCerrarSesion }) {
         </div>
 
         <div className="dashboard-body">
-            <div className="dashboard-principal">
-            <div className="dashboard-toolbar">
-                <h2>Monitoreo en vivo</h2>
-                <button className={vigilanciaActiva ? 'btn-detener' : 'btn-iniciar'} onClick={alternarVigilancia}>
-                {vigilanciaActiva ? '■ Detener' : '▶ Iniciar Vigilancia'}
-                </button>
-            </div>
+            <Sidebar vistaActiva={vistaActiva} onCambiarVista={setVistaActiva} />
 
-            <div className="mosaico-camaras">
-                {CAMARAS_DEMO.map((camara) => (
-                <TarjetaCamara
-                    key={camara.id}
-                    idCamara={camara.id}
-                    nombre={camara.nombre}
-                    activa={vigilanciaActiva}
-                />
-                ))}
-            </div>
-            </div>
+            <div className="dashboard-principal">{renderizarVistaPrincipal()}</div>
 
+            {vistaActiva === 'monitoreo' && (
             <aside className="dashboard-lateral">
-            <PanelAlertas idCamara="cam1" activo={vigilanciaActiva} />
+                <PanelAlertas idCamara="1" activo />
             </aside>
+            )}
         </div>
         </div>
     );

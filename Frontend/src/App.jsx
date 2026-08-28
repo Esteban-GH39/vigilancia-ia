@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import 'styles.css';
+import './styles.css';
 
 export default function App() {
     

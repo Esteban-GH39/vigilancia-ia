@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import json
 import sys
 sys.path.append('..')
-import configuracion
+import backend.configuracion as configuracion
 
 class SistemaAlertas:
 
