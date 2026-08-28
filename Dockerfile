@@ -22,4 +22,4 @@ ENV LOOP_VIDEO_DEMO=true
 EXPOSE 8000
 
 WORKDIR /app/Backend
-CMD ["sh", "-c", "python -m uvicorn servidor_principal:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000"]
