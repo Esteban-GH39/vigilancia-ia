@@ -418,39 +418,7 @@ button:active:not(:disabled) {
     opacity: 1;
 }
 
-/* ===== Selector de vista del mosaico (12 / 6 / 3 / 1) ===== */
-
-.selector-vista-mosaico {
-    display: flex;
-    gap: 0.35rem;
-    background: var(--bg-card);
-    border-radius: 8px;
-    padding: 0.25rem;
-    border: 1px solid var(--borde-sutil);
-}
-
-.selector-vista-mosaico button {
-    background: transparent;
-    border: none;
-    color: var(--texto);
-    padding: 0.35rem 0.7rem;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-family: 'Share Tech Mono', monospace;
-    cursor: pointer;
-    opacity: 0.6;
-}
-
-.selector-vista-mosaico button:hover {
-    opacity: 1;
-}
-
-.selector-vista-mosaico button.activo {
-    background: var(--acento);
-    color: #06122a;
-    opacity: 1;
-    font-weight: 600;
-}
+/* ===== Selector de localidades a mostrar en el mosaico ===== */
 
 .mosaico-camaras--vista-1 {
     grid-template-columns: 1fr !important;
@@ -462,17 +430,75 @@ button:active:not(:disabled) {
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
 }
 
-.mosaico-selector-localidad-unica {
-    margin-bottom: 1rem;
+.selector-localidades-envoltorio {
+    position: relative;
 }
 
-.mosaico-selector-localidad-unica select {
-    padding: 0.5rem;
-    border-radius: 6px;
-    border: 1px solid var(--bg-card2);
+.selector-localidades-panel {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: 20;
+    width: 260px;
+    background: var(--bg-panel);
+    border: 1px solid var(--borde-sutil);
+    border-radius: 10px;
+    padding: 0.75rem;
+    box-shadow: var(--sombra-panel);
+}
+
+.selector-localidades-acciones {
+    display: flex;
+    gap: 0.35rem;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--borde-sutil);
+}
+
+.selector-localidades-acciones button {
+    flex: 1;
     background: var(--bg-card);
+    border: 1px solid transparent;
     color: var(--texto);
-    font-family: 'Exo 2', sans-serif;
+    padding: 0.3rem 0.4rem;
+    border-radius: 5px;
+    font-size: 0.68rem;
+    cursor: pointer;
+}
+
+.selector-localidades-acciones button:hover {
+    border-color: var(--acento);
+}
+
+.selector-localidades-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.selector-localidades-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0.2rem 0.3rem;
+    border-radius: 5px;
+}
+
+.selector-localidades-item:hover {
+    background: var(--bg-card);
+}
+
+.selector-localidades-item input {
+    accent-color: var(--acento);
+}
+
+.selector-localidades-badge {
+    margin-left: auto;
+    font-size: 0.75rem;
 }
 
 .dashboard-lateral {
@@ -487,7 +513,7 @@ button:active:not(:disabled) {
     background: var(--bg-panel);
     border-radius: 10px;
     padding: 1rem 0.7rem;
-    align-self: flex-start;
+    align-self: stretch;
     border: 1px solid var(--borde-sutil);
     box-shadow: var(--sombra-panel);
 }
@@ -582,6 +608,47 @@ button:active:not(:disabled) {
     border-radius: 50%;
     background: var(--riesgo-bajo);
     animation: pulso-estado 2.5s infinite;
+}
+
+.sidebar-stats {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0 0.3rem;
+}
+
+.sidebar-stats-titulo {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.4;
+    margin-bottom: 0.1rem;
+}
+
+.sidebar-stats-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    background: var(--bg-card);
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+}
+
+.sidebar-stats-etiqueta {
+    font-size: 0.7rem;
+    opacity: 0.65;
+}
+
+.sidebar-stats-valor {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--acento);
+}
+
+.sidebar-stats-valor.alto {
+    color: var(--riesgo-alto);
 }
 
 .select-filtro {
@@ -887,6 +954,79 @@ button:active:not(:disabled) {
     margin: 0;
 }
 
+.analisis-territorial-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .analisis-territorial-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ranking-localidades {
+    background: var(--bg-panel);
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid var(--borde-sutil);
+    box-shadow: var(--sombra-panel);
+    max-height: 550px;
+    overflow-y: auto;
+}
+
+.ranking-localidades h3 {
+    font-family: 'Rajdhani', sans-serif;
+    margin-top: 0;
+    font-size: 1rem;
+}
+
+.ranking-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.ranking-fila {
+    display: grid;
+    grid-template-columns: 28px 1fr 24px;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.ranking-posicion {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    opacity: 0.5;
+}
+
+.ranking-nombre {
+    font-size: 0.78rem;
+    margin-bottom: 0.2rem;
+}
+
+.ranking-barra-track {
+    background: var(--bg-card);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+}
+
+.ranking-barra-relleno {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.ranking-valor {
+    text-align: right;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
 .panel-alertas {
     background: var(--bg-panel);
     border-radius: 10px;
@@ -940,4 +1080,176 @@ button:active:not(:disabled) {
 .panel-alertas-vacio {
     opacity: 0.5;
     font-size: 0.8rem;
+}
+
+/* ===== Bitácora de Casos ===== */
+
+.alerta-nivel {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.alerta-nivel-alto {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+}
+
+.alerta-nivel-medio {
+    background: rgba(234, 179, 8, 0.18);
+    color: #fde047;
+}
+
+.alerta-nivel-bajo {
+    background: rgba(34, 197, 94, 0.18);
+    color: #86efac;
+}
+
+.bitacora-resumen {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.bitacora-resumen-card {
+    background: var(--bg-card);
+    border: 1px solid var(--borde-sutil);
+    border-radius: 10px;
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    cursor: pointer;
+    color: var(--texto);
+}
+
+.bitacora-resumen-card:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.bitacora-resumen-card.activo {
+    border-color: var(--acento);
+    box-shadow: var(--glow-acento);
+    background: var(--bg-card2);
+}
+
+.bitacora-resumen-icono {
+    font-size: 1.1rem;
+}
+
+.bitacora-resumen-valor {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.bitacora-resumen-etiqueta {
+    font-size: 0.7rem;
+    opacity: 0.65;
+}
+
+.bitacora-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+
+.bitacora-buscador {
+    flex: 1;
+    min-width: 220px;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    border: 1px solid var(--bg-card2);
+    background: var(--bg-card);
+    color: var(--texto);
+}
+
+.bitacora-filtros select {
+    padding: 0.5rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--bg-card2);
+    background: var(--bg-card);
+    color: var(--texto);
+    font-family: 'Exo 2', sans-serif;
+}
+
+.bitacora-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.bitacora-caso {
+    background: var(--bg-panel);
+    border: 1px solid var(--borde-sutil);
+    border-left: 3px solid var(--bg-card2);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.bitacora-caso-pendiente {
+    border-left-color: var(--riesgo-medio);
+}
+
+.bitacora-caso-en_seguimiento {
+    border-left-color: var(--acento);
+}
+
+.bitacora-caso-resuelto {
+    border-left-color: var(--riesgo-bajo);
+    opacity: 0.7;
+}
+
+.bitacora-caso-info {
+    flex: 1;
+    min-width: 240px;
+}
+
+.bitacora-caso-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.bitacora-caso-localidad {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.bitacora-caso-fecha {
+    font-size: 0.7rem;
+    opacity: 0.5;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.bitacora-caso-descripcion {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+
+.bitacora-caso-acciones {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.btn-mini-activo {
+    background: var(--acento) !important;
+    color: #06122a !important;
+    border-color: transparent !important;
+    opacity: 1 !important;
 }

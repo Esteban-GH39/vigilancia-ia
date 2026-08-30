@@ -49,7 +49,6 @@ function obtenerToken() {
             headers: {
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-
             body: formData,
         });
         if (!respuesta.ok) {
@@ -66,6 +65,11 @@ function obtenerToken() {
         peticion(`/camaras/${idCamara}`, { method: 'DELETE' }),
 
     listarEventos: (limite = 50) => peticion(`/eventos/?limite=${limite}`),
+
+    actualizarEstadoEvento: (idEvento, estado) =>
+        peticion(`/eventos/${idEvento}/estado`, { method: 'PUT', body: JSON.stringify({ estado }) }),
+
+    estadisticasEventos: () => peticion('/eventos/estadisticas'),
 
     mapaCalor: () => peticion('/analisis/mapa-calor'),
 
