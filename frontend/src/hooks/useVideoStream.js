@@ -9,7 +9,10 @@ export function useVideoStream(idCamara, activo) {
         if (!activo) return undefined;
 
         const protocolo = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const ws = new WebSocket(`${protocolo}://${window.location.host}/ws/video/${idCamara}`);
+        const host = import.meta.env.VITE_API_URL
+            ? new URL(import.meta.env.VITE_API_URL).host
+            : window.location.host;
+        const ws = new WebSocket(`${protocolo}://${host}/ws/video/${idCamara}`);
         ws.binaryType = 'arraybuffer';
         wsRef.current = ws;
 
