@@ -1,10 +1,12 @@
 import asyncio
 import shutil
+import sys
 import uuid
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
+sys.path.append("..")
 import backend.configuracion as configuracion
 from app.core.queue_manager import gestor_sesiones
 from app.workers.ia_worker import iniciar_worker_camara
