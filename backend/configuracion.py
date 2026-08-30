@@ -31,11 +31,11 @@ ALTO_FRAME = 480   # Alto del frame en píxeles
 UMBRAL_MOVIMIENTO = 25      # Sensibilidad (más bajo = más sensible)
 AREA_MINIMA_CONTORNO = 500  # Área mínima en píxeles para considerar movimiento
 
-MODELO_YOLO = str(DIRECTORIO_BASE / "Backend" / "yolov8n.pt")  # Modelo nano (más rápido)
+MODELO_YOLO = str(DIRECTORIO_BASE / "yolov8n.pt")  # Modelo nano (más rápido)
 CONFIANZA_YOLO = 0.5           # Umbral de confianza (0.0 - 1.0)
 CLASES_INTERES = [0]           # 0 = persona en dataset COCO
 
-MODELO_YOLO_POSE = str(DIRECTORIO_BASE / "Backend" / "yolov8n-pose.pt")  
+MODELO_YOLO_POSE = str(DIRECTORIO_BASE / "yolov8n-pose.pt") 
 CONFIANZA_POSE = 0.5              # Umbral de confianza para keypoints
 KEYPOINTS_MINIMOS_VISIBLES = 8    # De 17 keypoints COCO, mínimo visibles para evaluar la pose
 UMBRAL_CAIDA_ANGULO_TRONCO = 45   # Grados respecto a la vertical para considerar "persona caída"
