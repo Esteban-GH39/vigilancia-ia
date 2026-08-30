@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY requirements.txt .
+
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
@@ -18,6 +21,8 @@ COPY . .
 ENV VIDEO_SOURCE=media/demo_video.mp4
 ENV ROTAR_FRAME_180=false
 ENV LOOP_VIDEO_DEMO=true
+
+EXPOSE 8000
 
 WORKDIR /app/backend
 
