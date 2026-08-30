@@ -1,4 +1,3 @@
-
 # Sistema de Vigilancia con Inteligencia Artificial
 
 Sistema inteligente de vigilancia en tiempo real que combina detección de movimiento,
@@ -49,7 +48,6 @@ Facultad de Ingeniería y Ciencias Básicas, **Universidad Central**.
 **Backend:**
 
 ```bash
-cd backend
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
