@@ -4,6 +4,7 @@ import MosaicoCamaras from '../components/MosaicoCamaras';
 import MapaCalor from '../components/MapaCalor';
 import PanelAlertas from '../components/PanelAlertas';
 import AlertasInteligentes from '../components/AlertasInteligentes';
+import BitacoraCasos from '../components/BitacoraCasos';
 import VistaPendiente from '../components/VistaPendiente';
 
 export default function Dashboard({ sesion, onCerrarSesion }) {
@@ -18,11 +19,11 @@ export default function Dashboard({ sesion, onCerrarSesion }) {
         case 'patrones':
             return <MapaCalor />;
         case 'camaras':
-            return <MosaicoCamaras />; // misma gestión CRUD, distinto punto de entrada del menú
+            return <MosaicoCamaras />; 
         case 'control':
             return <VistaPendiente titulo="Centro de Control Estratégico" icono="🏛️" sprintSugerido="Sprint 26 - Dashboard completo" />;
-        case 'facial':
-            return <VistaPendiente titulo="Reconocimiento Facial" icono="👤" sprintSugerido="Sprint 23 - Reconocimiento facial (HU11)" />;
+        case 'bitacora':
+            return <BitacoraCasos />;
         case 'reportes':
             return <VistaPendiente titulo="Reportes" icono="📋" sprintSugerido="Sprint 27 - Reportes (HU20)" />;
         case 'usuarios':

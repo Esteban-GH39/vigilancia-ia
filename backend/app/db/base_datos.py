@@ -20,7 +20,8 @@ class Evento(Base):
     ruta_video = Column(String(200))
     cantidad_personas = Column(Integer)
     alerta_enviada = Column(Boolean, default=False)
-    
+    estado_caso = Column(String(20), default="pendiente")  # pendiente | en_seguimiento | resuelto
+
     def a_diccionario(self):
 
         return {
@@ -33,7 +34,8 @@ class Evento(Base):
             "descripcion": self.descripcion,
             "ruta_video": self.ruta_video,
             "cantidad_personas": self.cantidad_personas,
-            "alerta_enviada": self.alerta_enviada
+            "alerta_enviada": self.alerta_enviada,
+            "estado_caso": self.estado_caso or "pendiente",
         }
 
 class PersonaRastreada(Base):
@@ -107,5 +109,26 @@ def obtener_estadisticas_eventos():
             "medio": eventos_medio_riesgo,
             "bajo": eventos_bajo_riesgo
         }
+    finally:
+        sesion.close()
+
+
+ESTADOS_CASO_VALIDOS = {"pendiente", "en_seguimiento", "resuelto"}
+
+
+def actualizar_estado_evento(id_evento, estado):
+
+    if estado not in ESTADOS_CASO_VALIDOS:
+        raise ValueError(f"Estado inválido: {estado}")
+
+    sesion = FabricaSesion()
+    try:
+        evento = sesion.query(Evento).filter(Evento.id == id_evento).first()
+        if evento is None:
+            return None
+        evento.estado_caso = estado
+        sesion.commit()
+        sesion.refresh(evento)
+        return evento.a_diccionario()
     finally:
         sesion.close()
