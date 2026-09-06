@@ -5,29 +5,56 @@ import MapaCalor from '../components/MapaCalor';
 import PanelAlertas from '../components/PanelAlertas';
 import AlertasInteligentes from '../components/AlertasInteligentes';
 import BitacoraCasos from '../components/BitacoraCasos';
+import GestionUsuarios from '../components/GestionUsuarios';
 import VistaPendiente from '../components/VistaPendiente';
+
+const RESTRICCIONES_VISTA = {
+    usuarios: ['admin'],
+    camaras: ['admin', 'operador'],
+};
+
+const ETIQUETA_ROL = {
+    admin: 'Administrador',
+    operador: 'Operador',
+    visualizador: 'Visualizador',
+};
 
 export default function Dashboard({ sesion, onCerrarSesion }) {
     const [vistaActiva, setVistaActiva] = useState('monitoreo');
+    const rol = sesion.rol;
+
+    function tieneAcceso(vista) {
+        const rolesPermitidos = RESTRICCIONES_VISTA[vista];
+        return !rolesPermitidos || rolesPermitidos.includes(rol);
+    }
 
     function renderizarVistaPrincipal() {
+        if (!tieneAcceso(vistaActiva)) {
+            return (
+                <div className="estado-vacio">
+                    <span className="estado-vacio-icono">🔒</span>
+                    <p>No tienes permiso para ver este módulo con tu rol actual ({rol}).</p>
+                </div>
+            );
+        }
+
         switch (vistaActiva) {
         case 'monitoreo':
-            return <MosaicoCamaras />;
+            return <MosaicoCamaras rol={rol} />;
         case 'alertas':
             return <AlertasInteligentes />;
         case 'patrones':
             return <MapaCalor />;
         case 'camaras':
-            return <MosaicoCamaras />; 
+            return <MosaicoCamaras rol={rol} />; // misma gestión CRUD, distinto punto de entrada del menú
         case 'control':
-            return <VistaPendiente titulo="Centro de Control Estratégico" icono="🏛️" sprintSugerido="Sprint 26 - Dashboard completo" />;
+            return <VistaPendiente titulo="Centro de Control Estratégico" icono="🏛️" sprintSugerido="Sprint 2 - Dashboard completo" />;
         case 'bitacora':
-            return <BitacoraCasos />;
+            return <BitacoraCasos rol={rol} />;
         case 'reportes':
-            return <VistaPendiente titulo="Reportes" icono="📋" sprintSugerido="Sprint 27 - Reportes (HU20)" />;
+            return <VistaPendiente titulo="Reportes" icono="📋" sprintSugerido="Sprint 3 - Reportes (HU20)" />;
         case 'usuarios':
-            return <VistaPendiente titulo="Gestión de Usuarios" icono="👥" sprintSugerido="RF-19 en adelante" />;
+            return <GestionUsuarios />;
         default:
             return null;
         }
@@ -42,7 +69,7 @@ export default function Dashboard({ sesion, onCerrarSesion }) {
             </div>
             <div className="topbar-user">
             <span>{sesion.usuario}</span>
-            <span className="topbar-badge">{sesion.rol}</span>
+            <span className="topbar-badge">{ETIQUETA_ROL[sesion.rol] || sesion.rol}</span>
             <button className="btn-logout" onClick={onCerrarSesion}>
                 Cerrar Sesión
             </button>
@@ -50,7 +77,7 @@ export default function Dashboard({ sesion, onCerrarSesion }) {
         </div>
 
         <div className="dashboard-body">
-            <Sidebar vistaActiva={vistaActiva} onCambiarVista={setVistaActiva} />
+            <Sidebar vistaActiva={vistaActiva} onCambiarVista={setVistaActiva} rol={rol} />
 
             <div className="dashboard-principal">{renderizarVistaPrincipal()}</div>
 

@@ -1,6 +1,4 @@
-const BASE_API = import.meta.env.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/api`
-    : '/api';
+const BASE_API = '/api';
 
 function obtenerToken() {
     return sessionStorage.getItem('token');
@@ -31,6 +29,20 @@ function obtenerToken() {
         body: JSON.stringify({ usuario, contrasena }),
         }),
 
+    registro: (usuario, nombre, contrasena) =>
+        peticion('/auth/registro', {
+        method: 'POST',
+        body: JSON.stringify({ usuario, nombre, contrasena }),
+        }),
+
+    listarUsuarios: () => peticion('/usuarios/'),
+
+    actualizarEstadoUsuario: (idUsuario, estado) =>
+        peticion(`/usuarios/${idUsuario}/estado`, { method: 'PUT', body: JSON.stringify({ estado }) }),
+
+    actualizarRolUsuario: (idUsuario, rol) =>
+        peticion(`/usuarios/${idUsuario}/rol`, { method: 'PUT', body: JSON.stringify({ rol }) }),
+
     iniciarCamara: (idCamara) =>
         peticion(`/camaras/${idCamara}/iniciar`, { method: 'POST' }),
 
@@ -51,6 +63,8 @@ function obtenerToken() {
             headers: {
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
+            // No se define Content-Type a propósito: el navegador arma el
+            // boundary de multipart/form-data automáticamente a partir del FormData.
             body: formData,
         });
         if (!respuesta.ok) {

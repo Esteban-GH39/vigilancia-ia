@@ -3,9 +3,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.db import modelos_camara
+from app.db import modelos_camara, modelos_usuario
+from app.db.repositorio_usuarios import asegurar_admin_inicial
 
-from app.routers import camaras, websocket, eventos, alertas, auth, analisis, localidades
+from app.routers import camaras, websocket, eventos, alertas, auth, analisis, localidades, usuarios
 from app.core.config import HOST_API, PUERTO_API
 
 app = FastAPI (
@@ -23,12 +24,18 @@ app.add_middleware (
 )
 
 app.include_router(auth.router)
+app.include_router(usuarios.router)
 app.include_router(camaras.router)
 app.include_router(eventos.router)
 app.include_router(alertas.router)
 app.include_router(websocket.router)
 app.include_router(analisis.router)
 app.include_router(localidades.router)
+
+
+@app.on_event("startup")
+async def sembrar_datos_iniciales():
+    asegurar_admin_inicial()
 
 @app.get("/")
 async def raiz():

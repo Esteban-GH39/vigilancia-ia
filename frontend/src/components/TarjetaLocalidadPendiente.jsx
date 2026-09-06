@@ -1,4 +1,4 @@
-export default function TarjetaLocalidadPendiente({ localidad, onAsignar }) {
+export default function TarjetaLocalidadPendiente({ localidad, onAsignar, soloLectura = false }) {
     return (
         <div className="tarjeta-camara tarjeta-localidad-pendiente">
             <div className="tarjeta-camara-header">
@@ -9,9 +9,11 @@ export default function TarjetaLocalidadPendiente({ localidad, onAsignar }) {
             <div className="tarjeta-camara-video tarjeta-localidad-pendiente-video">
                 <span className="tarjeta-camara-espera-icono">📍</span>
                 <span>Localidad sin cámara asignada</span>
-                <button className="btn-mini" onClick={() => onAsignar(localidad.nombre)}>
-                    + Asignar cámara
-                </button>
+                {!soloLectura && (
+                    <button className="btn-mini" onClick={() => onAsignar(localidad.nombre)}>
+                        + Asignar cámara
+                    </button>
+                )}
             </div>
 
             <div className="tarjeta-camara-footer">

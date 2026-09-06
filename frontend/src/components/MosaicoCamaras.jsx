@@ -4,7 +4,8 @@ import TarjetaCamara from './TarjetaCamara';
 import TarjetaLocalidadPendiente from './TarjetaLocalidadPendiente';
 import FormularioCamara from './FormularioCamara';
 
-export default function MosaicoCamaras() {
+export default function MosaicoCamaras({ rol }) {
+    const puedeGestionar = rol === 'admin' || rol === 'operador';
     const [camaras, setCamaras] = useState([]);
     const [localidades, setLocalidades] = useState([]);
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -125,9 +126,11 @@ export default function MosaicoCamaras() {
                             </div>
                         )}
                     </div>
+                    {puedeGestionar && (
                     <button className="btn-iniciar" onClick={() => abrirFormularioPara(null)}>
                         + Registrar cámara
                     </button>
+                    )}
                 </div>
             </div>
 
@@ -141,9 +144,11 @@ export default function MosaicoCamaras() {
                 <div className="estado-vacio">
                     <span className="estado-vacio-icono">🎥</span>
                     <p>Todavía no hay cámaras ni localidades registradas.</p>
+                    {puedeGestionar && (
                     <button className="btn-iniciar" onClick={() => abrirFormularioPara(null)}>
                         + Registrar la primera cámara
                     </button>
+                    )}
                 </div>
             ) : itemsVisibles.length === 0 ? (
                 <div className="estado-vacio">
@@ -158,12 +163,14 @@ export default function MosaicoCamaras() {
                                 key={camara.id_camara}
                                 camara={camara}
                                 onEliminada={manejarCamaraEliminada}
+                                soloLectura={!puedeGestionar}
                             />
                         ) : (
                             <TarjetaLocalidadPendiente
                                 key={localidad.nombre}
                                 localidad={localidad}
                                 onAsignar={abrirFormularioPara}
+                                soloLectura={!puedeGestionar}
                             />
                         )
                     )}

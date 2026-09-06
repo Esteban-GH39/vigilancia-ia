@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.core.seguridad import obtener_usuario_actual
 from app.db.base_datos import FabricaSesion, Evento
 from app.db.modelos_camara import Camara
 from app.constants.localidades import LOCALIDADES_BOGOTA, NOMBRES_LOCALIDADES
@@ -7,7 +8,7 @@ router = APIRouter(prefix="/api/analisis", tags=["analisis"])
 
 
 @router.get("/mapa-calor")
-async def mapa_calor():
+async def mapa_calor(usuario_actual: dict = Depends(obtener_usuario_actual)):
     sesion = FabricaSesion()
     try:
         localidades_con_eventos = []

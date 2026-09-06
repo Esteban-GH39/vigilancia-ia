@@ -21,8 +21,8 @@ const SECCIONES = [
     {
         etiqueta: 'Gestión',
         items: [
-        { id: 'camaras', icono: '🎥', texto: 'Gestión de Cámaras' },
-        { id: 'usuarios', icono: '👥', texto: 'Gestión de Usuarios' },
+        { id: 'camaras', icono: '🎥', texto: 'Gestión de Cámaras', roles: ['admin', 'operador'] },
+        { id: 'usuarios', icono: '👥', texto: 'Gestión de Usuarios', roles: ['admin'] },
         ],
     },
 ];
@@ -63,8 +63,13 @@ function useEstadisticasRapidas() {
     return datos;
 }
 
-export default function Sidebar({ vistaActiva, onCambiarVista }) {
+export default function Sidebar({ vistaActiva, onCambiarVista, rol }) {
     const stats = useEstadisticasRapidas();
+
+    const seccionesVisibles = SECCIONES.map((seccion) => ({
+        ...seccion,
+        items: seccion.items.filter((item) => !item.roles || item.roles.includes(rol)),
+    })).filter((seccion) => seccion.items.length > 0);
 
     return (
         <nav className="sidebar">
@@ -76,7 +81,7 @@ export default function Sidebar({ vistaActiva, onCambiarVista }) {
             </div>
         </div>
 
-        {SECCIONES.map((seccion) => (
+        {seccionesVisibles.map((seccion) => (
             <div key={seccion.etiqueta} className="sidebar-section">
             <div className="sidebar-label">{seccion.etiqueta}</div>
             {seccion.items.map((item) => (

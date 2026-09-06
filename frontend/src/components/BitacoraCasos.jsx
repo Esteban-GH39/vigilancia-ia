@@ -9,7 +9,8 @@ const ESTADOS = [
 
 const NIVELES = ['ALTO', 'MEDIO', 'BAJO'];
 
-export default function BitacoraCasos() {
+export default function BitacoraCasos({ rol }) {
+    const puedeGestionar = rol === 'admin' || rol === 'operador';
     const [eventos, setEventos] = useState([]);
     const [localidades, setLocalidades] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -152,6 +153,7 @@ export default function BitacoraCasos() {
                                     <p className="bitacora-caso-descripcion">{ev.descripcion}</p>
                                 </div>
 
+                                {puedeGestionar && (
                                 <div className="bitacora-caso-acciones">
                                     {ESTADOS.map((estado) => (
                                         <button
@@ -164,6 +166,7 @@ export default function BitacoraCasos() {
                                         </button>
                                     ))}
                                 </div>
+                                )}
                             </div>
                         );
                     })}

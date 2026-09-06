@@ -1,13 +1,13 @@
 import asyncio
 import shutil
-import sys
 import uuid
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
-sys.path.append("..")
 import backend.configuracion as configuracion
+from fastapi import Depends
+from app.core.seguridad import requiere_rol, obtener_usuario_actual
 from app.core.queue_manager import gestor_sesiones
 from app.workers.ia_worker import iniciar_worker_camara
 from app.services.captura_video import CapturaVideo
@@ -24,6 +24,7 @@ router = APIRouter(prefix="/api/camaras", tags=["camaras"])
 
 _tareas_activas: dict[str, asyncio.Task] = {}
 
+
 class CamaraEntrada(BaseModel):
     nombre: str
     ubicacion: str
@@ -31,6 +32,7 @@ class CamaraEntrada(BaseModel):
     fuente: str = "0"
     latitud: float | None = None
     longitud: float | None = None
+
 
 class CamaraActualizacion(BaseModel):
     nombre: str | None = None
@@ -41,13 +43,16 @@ class CamaraActualizacion(BaseModel):
     latitud: float | None = None
     longitud: float | None = None
 
+
 @router.get("/")
-async def listar_camaras():
+async def listar_camaras(usuario_actual: dict = Depends(obtener_usuario_actual)):
     return repo.listar_camaras()
 
+
 @router.post("/")
-async def crear_camara(datos: CamaraEntrada):
+async def crear_camara(datos: CamaraEntrada, usuario_actual: dict = Depends(requiere_rol("admin", "operador"))):
     return repo.crear_camara(**datos.model_dump())
+
 
 @router.post("/subir-video")
 async def crear_camara_con_video(
@@ -56,6 +61,7 @@ async def crear_camara_con_video(
     latitud: float | None = Form(None),
     longitud: float | None = Form(None),
     archivo: UploadFile = File(...),
+    usuario_actual: dict = Depends(requiere_rol("admin", "operador")),
 ):
 
     extension = Path(archivo.filename or "").suffix.lower()
@@ -84,23 +90,30 @@ async def crear_camara_con_video(
         longitud=longitud,
     )
 
+
 @router.put("/{id_camara}")
-async def editar_camara(id_camara: int, datos: CamaraActualizacion):
+async def editar_camara(
+    id_camara: int,
+    datos: CamaraActualizacion,
+    usuario_actual: dict = Depends(requiere_rol("admin", "operador")),
+):
     camara = repo.editar_camara(id_camara, **datos.model_dump())
     if not camara:
         raise HTTPException(404, detail="Cámara no encontrada")
     return camara
 
+
 @router.delete("/{id_camara}")
-async def eliminar_camara(id_camara: int):
+async def eliminar_camara(id_camara: int, usuario_actual: dict = Depends(requiere_rol("admin", "operador"))):
     if id_camara in _tareas_activas:
         raise HTTPException(400, detail="Detén la vigilancia antes de eliminar la cámara")
     if not repo.eliminar_camara(id_camara):
         raise HTTPException(404, detail="Cámara no encontrada")
     return {"mensaje": "Cámara eliminada"}
 
+
 @router.post("/{id_camara}/iniciar")
-async def iniciar_vigilancia(id_camara: int):
+async def iniciar_vigilancia(id_camara: int, usuario_actual: dict = Depends(requiere_rol("admin", "operador"))):
     clave = str(id_camara)
     if clave in _tareas_activas:
         raise HTTPException(400, detail="Esta cámara ya está en vigilancia")
@@ -136,8 +149,9 @@ async def iniciar_vigilancia(id_camara: int):
     repo.editar_camara(id_camara, estado="activa")
     return {"mensaje": f"Vigilancia iniciada en cámara {id_camara}"}
 
+
 @router.post("/{id_camara}/detener")
-async def detener_vigilancia(id_camara: int):
+async def detener_vigilancia(id_camara: int, usuario_actual: dict = Depends(requiere_rol("admin", "operador"))):
     clave = str(id_camara)
     sesion = gestor_sesiones.obtener(clave)
     if not sesion:
@@ -150,8 +164,9 @@ async def detener_vigilancia(id_camara: int):
     repo.editar_camara(id_camara, estado="inactiva")
     return {"mensaje": f"Vigilancia detenida en cámara {id_camara}"}
 
+
 @router.get("/{id_camara}/estado")
-async def estado_camara(id_camara: int):
+async def estado_camara(id_camara: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     sesion = gestor_sesiones.obtener(str(id_camara))
     if not sesion:
         return {"corriendo": False}
