@@ -24,6 +24,8 @@ ENV LOOP_VIDEO_DEMO=true
 
 EXPOSE 8000
 
+ENV PYTHONPATH=/app
+
 WORKDIR /app/backend
 
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
