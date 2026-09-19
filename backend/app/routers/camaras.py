@@ -125,6 +125,7 @@ async def iniciar_vigilancia(id_camara: int, usuario_actual: dict = Depends(requ
         raise HTTPException(404, detail="Cámara no encontrada")
 
     sesion = gestor_sesiones.obtener_o_crear(clave)
+    sesion.ubicacion = datos_camara.get("ubicacion", "")
 
     fuente_camara = datos_camara["fuente"]
     es_indice_dispositivo = datos_camara.get("tipo") == "webcam" or (
@@ -133,7 +134,7 @@ async def iniciar_vigilancia(id_camara: int, usuario_actual: dict = Depends(requ
     if es_indice_dispositivo:
         fuente_camara = int(fuente_camara)
 
-        captura = CapturaVideo(fuente_camara)
+    captura = CapturaVideo(fuente_camara)
 
     try:
         captura.iniciar()
@@ -178,7 +179,7 @@ async def detener_vigilancia(id_camara: int, usuario_actual: dict = Depends(requ
     if not sesion:
         raise HTTPException(404, detail="La cámara no está en vigilancia")
 
-        sesion.corriendo = False
+    sesion.corriendo = False
     tarea = _tareas_activas.pop(clave, None)
     if tarea:
         tarea.cancel()
