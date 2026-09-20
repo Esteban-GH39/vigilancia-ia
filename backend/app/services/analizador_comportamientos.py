@@ -2,7 +2,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import sys
 sys.path.append('..')
-import backend.configuracion as configuracion
+import configuracion
 
 class AnalizadorComportamiento:
 
