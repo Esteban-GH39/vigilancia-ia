@@ -7,6 +7,7 @@ import AlertasInteligentes from '../components/AlertasInteligentes';
 import BitacoraCasos from '../components/BitacoraCasos';
 import GestionUsuarios from '../components/GestionUsuarios';
 import VistaPendiente from '../components/VistaPendiente';
+import Reportes from '../components/Reportes';
 
 const RESTRICCIONES_VISTA = {
     usuarios: ['admin'],
@@ -52,7 +53,7 @@ export default function Dashboard({ sesion, onCerrarSesion }) {
         case 'bitacora':
             return <BitacoraCasos rol={rol} />;
         case 'reportes':
-            return <VistaPendiente titulo="Reportes" icono="📋" sprintSugerido="Sprint 3 - Reportes (HU20)" />;
+            return <Reportes />;
         case 'usuarios':
             return <GestionUsuarios />;
         default:
