@@ -84,6 +84,15 @@ function obtenerToken() {
 
     listarEventos: (limite = 50) => peticion(`/eventos/?limite=${limite}`),
 
+    listarEventosFiltrados: (filtros = {}) => {
+        const params = new URLSearchParams();
+        if (filtros.ubicacion) params.set('ubicacion', filtros.ubicacion);
+        if (filtros.nivelRiesgo) params.set('nivel_riesgo', filtros.nivelRiesgo);
+        if (filtros.fechaInicio) params.set('fecha_inicio', filtros.fechaInicio);
+        if (filtros.fechaFin) params.set('fecha_fin', filtros.fechaFin);
+        return peticion(`/eventos/?${params.toString()}`);
+    },
+
     actualizarEstadoEvento: (idEvento, estado) =>
         peticion(`/eventos/${idEvento}/estado`, { method: 'PUT', body: JSON.stringify({ estado }) }),
 
@@ -92,4 +101,37 @@ function obtenerToken() {
     mapaCalor: () => peticion('/analisis/mapa-calor'),
 
     listarLocalidades: () => peticion('/localidades/'),
+
+    exportarReporte: async (filtros = {}, formato = 'pdf') => {
+        const token = obtenerToken();
+        const params = new URLSearchParams({ formato });
+        if (filtros.ubicacion) params.set('ubicacion', filtros.ubicacion);
+        if (filtros.nivelRiesgo) params.set('nivel_riesgo', filtros.nivelRiesgo);
+        if (filtros.fechaInicio) params.set('fecha_inicio', filtros.fechaInicio);
+        if (filtros.fechaFin) params.set('fecha_fin', filtros.fechaFin);
+
+        const respuesta = await fetch(`${BASE_API}/reportes/exportar?${params.toString()}`, {
+            headers: {
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+        });
+
+        if (!respuesta.ok) {
+            const detalle = await respuesta.json().catch(() => ({}));
+            throw new Error(detalle.detail || 'No se pudo generar el reporte');
+        }
+
+        const blob = await respuesta.blob();
+        const extension = formato === 'csv' ? 'csv' : 'pdf';
+        const nombreArchivo = `reporte_${new Date().toISOString().slice(0, 10)}.${extension}`;
+
+        const url = window.URL.createObjectURL(blob);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = nombreArchivo;
+        document.body.appendChild(enlace);
+        enlace.click();
+        enlace.remove();
+        window.URL.revokeObjectURL(url);
+    },
 };

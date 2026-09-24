@@ -1,8 +1,12 @@
+from datetime import date, datetime, time
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from app.core.seguridad import requiere_rol, obtener_usuario_actual
 from app.db.eventos import (
     obtener_eventos_recientes,
+    obtener_eventos_filtrados,
     obtener_estadisticas_eventos,
     actualizar_estado_evento,
 )
@@ -15,8 +19,27 @@ class ActualizarEstadoEntrada(BaseModel):
 
 
 @router.get("/")
-async def listar_eventos(limite: int = 50, usuario_actual: dict = Depends(obtener_usuario_actual)):
-    return obtener_eventos_recientes(limite)
+async def listar_eventos(
+    limite: int = 50,
+    ubicacion: Optional[str] = None,
+    nivel_riesgo: Optional[str] = None,
+    fecha_inicio: Optional[date] = None,
+    fecha_fin: Optional[date] = None,
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
+    hay_filtros = any([ubicacion, nivel_riesgo, fecha_inicio, fecha_fin])
+    if not hay_filtros:
+        return obtener_eventos_recientes(limite)
+
+    inicio = datetime.combine(fecha_inicio, time.min) if fecha_inicio else None
+    fin = datetime.combine(fecha_fin, time.max) if fecha_fin else None
+
+    return obtener_eventos_filtrados(
+        ubicacion=ubicacion,
+        nivel_riesgo=nivel_riesgo,
+        fecha_inicio=inicio,
+        fecha_fin=fin,
+    )
 
 
 @router.get("/estadisticas")
