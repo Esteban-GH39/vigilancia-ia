@@ -88,6 +88,26 @@ def obtener_eventos_recientes(limite=10):
     finally:
         sesion.close()
 
+def obtener_eventos_filtrados(ubicacion=None, nivel_riesgo=None, fecha_inicio=None, fecha_fin=None):
+
+    sesion = FabricaSesion()
+    try:
+        consulta = sesion.query(Evento)
+
+        if ubicacion:
+            consulta = consulta.filter(Evento.ubicacion == ubicacion)
+        if nivel_riesgo:
+            consulta = consulta.filter(Evento.nivel_riesgo == nivel_riesgo)
+        if fecha_inicio:
+            consulta = consulta.filter(Evento.marca_tiempo >= fecha_inicio)
+        if fecha_fin:
+            consulta = consulta.filter(Evento.marca_tiempo <= fecha_fin)
+
+        eventos = consulta.order_by(Evento.marca_tiempo.desc()).all()
+        return [evento.a_diccionario() for evento in eventos]
+    finally:
+        sesion.close()
+
 def obtener_estadisticas_eventos():
 
     sesion = FabricaSesion()
