@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db import modelos_camara, modelos_usuario
 from app.db.repositorio_usuarios import asegurar_admin_inicial
 
-from app.routers import camaras, websocket, eventos, alertas, auth, analisis, localidades, usuarios
+from app.routers import camaras, websocket, eventos, alertas, auth, analisis, localidades, usuarios, reportes
 from app.core.config import HOST_API, PUERTO_API
 
 app = FastAPI (
@@ -31,6 +31,7 @@ app.include_router(alertas.router)
 app.include_router(websocket.router)
 app.include_router(analisis.router)
 app.include_router(localidades.router)
+app.include_router(reportes.router)
 
 
 @app.on_event("startup")

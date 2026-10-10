@@ -1,10 +1,8 @@
 import cv2
 import numpy as np
-import sys
 import platform
 from datetime import datetime
-sys.path.append('..')
-import backend.configuracion as configuracion
+import configuracion
 
 class CapturaVideo:
 

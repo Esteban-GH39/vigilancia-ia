@@ -5,6 +5,7 @@ from typing import Optional
 @dataclass
 class SesionCamara:
     id_camara: str
+    ubicacion: str = ""
     corriendo: bool = False
     frames_procesados: int = 0
     alertas_generadas: int = 0

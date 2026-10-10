@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import sys
 sys.path.append('..')
-import backend.configuracion as configuracion
+import configuracion
 
 class DetectorObjetos:
 

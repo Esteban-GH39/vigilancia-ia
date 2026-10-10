@@ -130,12 +130,13 @@ async def iniciar_worker_camara(
                         ruta_video = captura_video.guardar_clip(sesion.frames_recientes, nombre_clip)
 
                         datos_evento = {
-                            "id_camara": sesion.id_camara,
+                            "ubicacion": sesion.ubicacion,
                             "tipo_evento": "comportamiento_sospechoso",
                             "nivel_riesgo": nivel_riesgo,
                             "confianza": puntuacion,
                             "descripcion": explicacion,
                             "ruta_video": ruta_video,
+                            "cantidad_personas": sesion.personas_detectadas,
                         }
 
                         await loop.run_in_executor(_executor, guardar_evento, datos_evento)

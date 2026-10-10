@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
-import backend.configuracion as configuracion
+import configuracion
 from fastapi import Depends
 from app.core.seguridad import requiere_rol, obtener_usuario_actual
 from app.core.queue_manager import gestor_sesiones
@@ -23,6 +23,7 @@ EXTENSIONES_VIDEO_PERMITIDAS = {".mp4", ".avi", ".mov", ".mkv", ".webm"}
 router = APIRouter(prefix="/api/camaras", tags=["camaras"])
 
 _tareas_activas: dict[str, asyncio.Task] = {}
+_capturas_activas: dict[str, CapturaVideo] = {}
 
 
 class CamaraEntrada(BaseModel):
@@ -124,6 +125,7 @@ async def iniciar_vigilancia(id_camara: int, usuario_actual: dict = Depends(requ
         raise HTTPException(404, detail="Cámara no encontrada")
 
     sesion = gestor_sesiones.obtener_o_crear(clave)
+    sesion.ubicacion = datos_camara.get("ubicacion", "")
 
     fuente_camara = datos_camara["fuente"]
     es_indice_dispositivo = datos_camara.get("tipo") == "webcam" or (
@@ -133,6 +135,14 @@ async def iniciar_vigilancia(id_camara: int, usuario_actual: dict = Depends(requ
         fuente_camara = int(fuente_camara)
 
     captura = CapturaVideo(fuente_camara)
+
+    try:
+        captura.iniciar()
+    except Exception as error:
+        raise HTTPException(
+            400,
+            detail=f"No se pudo iniciar la cámara {id_camara}: {error}",
+        )
 
     tarea = asyncio.create_task(
         iniciar_worker_camara(
@@ -145,7 +155,19 @@ async def iniciar_vigilancia(id_camara: int, usuario_actual: dict = Depends(requ
             sistema_alertas=SistemaAlertas(),
         )
     )
+
+    def _al_finalizar(_tarea: asyncio.Task, clave=clave, id_camara=id_camara):
+        captura_previa = _capturas_activas.pop(clave, None)
+        if captura_previa:
+            captura_previa.detener()
+        if _tareas_activas.get(clave) is _tarea:
+            _tareas_activas.pop(clave, None)
+            repo.editar_camara(id_camara, estado="inactiva")
+
+    tarea.add_done_callback(_al_finalizar)
+
     _tareas_activas[clave] = tarea
+    _capturas_activas[clave] = captura
     repo.editar_camara(id_camara, estado="activa")
     return {"mensaje": f"Vigilancia iniciada en cámara {id_camara}"}
 
@@ -161,6 +183,11 @@ async def detener_vigilancia(id_camara: int, usuario_actual: dict = Depends(requ
     tarea = _tareas_activas.pop(clave, None)
     if tarea:
         tarea.cancel()
+
+    captura = _capturas_activas.pop(clave, None)
+    if captura:
+        captura.detener()
+
     repo.editar_camara(id_camara, estado="inactiva")
     return {"mensaje": f"Vigilancia detenida en cámara {id_camara}"}
 
