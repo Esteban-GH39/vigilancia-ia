@@ -1203,6 +1203,26 @@ button:active:not(:disabled) {
     font-family: 'Exo 2', sans-serif;
 }
 
+.bitacora-filtros input[type='date'] {
+    padding: 0.5rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--bg-card2);
+    background: var(--bg-card);
+    color: var(--texto);
+    font-family: 'Share Tech Mono', monospace;
+    color-scheme: dark;
+}
+
+.bitacora-filtros input[type='date']:focus {
+    outline: none;
+    border-color: var(--acento);
+}
+
+.bitacora-filtros input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.4);
+    cursor: pointer;
+}
+
 .bitacora-lista {
     display: flex;
     flex-direction: column;
