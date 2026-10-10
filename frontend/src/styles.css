@@ -1359,3 +1359,148 @@ button:active:not(:disabled) {
     background: rgba(239, 68, 68, 0.18);
     color: #fca5a5;
 }
+
+/* ---------- KPIs reutilizables (Centro de Control, Análisis Territorial) ---------- */
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.kpi-card {
+    background: var(--bg-panel);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--borde-sutil);
+    box-shadow: var(--sombra-panel);
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.kpi-card-alto {
+    border-color: rgba(239, 68, 68, 0.45);
+}
+
+.kpi-valor {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.6rem;
+    line-height: 1.1;
+}
+
+.kpi-etiqueta {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+/* ---------- Centro de Control Estratégico ---------- */
+
+.centro-control-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 900px) {
+    .centro-control-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.centro-control-layout .mapa-tarjeta h3,
+.centro-control-layout .ranking-localidades h3 {
+    font-family: 'Rajdhani', sans-serif;
+    margin-top: 0;
+    font-size: 1rem;
+}
+
+.grafico-barras {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 220px;
+    padding-top: 0.5rem;
+}
+
+.grafico-barra-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    gap: 0.3rem;
+}
+
+.grafico-barra {
+    width: 100%;
+    min-height: 2px;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(180deg, #3b82f6, rgba(59, 130, 246, 0.35));
+    transition: height 0.4s ease;
+}
+
+.grafico-barra-etiqueta {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    opacity: 0.5;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+}
+
+.feed-alertas {
+    background: var(--bg-panel);
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid var(--borde-sutil);
+    box-shadow: var(--sombra-panel);
+}
+
+.feed-alertas h3 {
+    font-family: 'Rajdhani', sans-serif;
+    margin-top: 0;
+    font-size: 1rem;
+}
+
+.feed-alertas-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.feed-alertas-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--borde-sutil);
+}
+
+.feed-alertas-texto {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.82rem;
+    gap: 0.15rem;
+}
+
+.feed-alertas-descripcion {
+    font-size: 0.72rem;
+    opacity: 0.65;
+}
+
+.feed-alertas-tiempo {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    opacity: 0.6;
+    white-space: nowrap;
+}

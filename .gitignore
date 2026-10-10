@@ -26,3 +26,4 @@ almacenamiento/alertas/*
 .idea/
 
 node_modules/
+dist/

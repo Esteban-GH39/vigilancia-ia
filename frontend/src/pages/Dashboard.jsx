@@ -6,7 +6,8 @@ import PanelAlertas from '../components/PanelAlertas';
 import AlertasInteligentes from '../components/AlertasInteligentes';
 import BitacoraCasos from '../components/BitacoraCasos';
 import GestionUsuarios from '../components/GestionUsuarios';
-import VistaPendiente from '../components/VistaPendiente';
+import Reportes from '../components/Reportes';
+import CentroControl from '../components/CentroControl';
 
 const RESTRICCIONES_VISTA = {
     usuarios: ['admin'],
@@ -48,11 +49,11 @@ export default function Dashboard({ sesion, onCerrarSesion }) {
         case 'camaras':
             return <MosaicoCamaras rol={rol} />; // misma gestión CRUD, distinto punto de entrada del menú
         case 'control':
-            return <VistaPendiente titulo="Centro de Control Estratégico" icono="🏛️" sprintSugerido="Sprint 2 - Dashboard completo" />;
+            return <CentroControl />;
         case 'bitacora':
             return <BitacoraCasos rol={rol} />;
         case 'reportes':
-            return <VistaPendiente titulo="Reportes" icono="📋" sprintSugerido="Sprint 3 - Reportes (HU20)" />;
+            return <Reportes />;
         case 'usuarios':
             return <GestionUsuarios />;
         default:

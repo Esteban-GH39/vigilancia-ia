@@ -1,0 +1,27 @@
+From cc2e0b623cd99728b6252aa134be95279c1ef6f6 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 9 Oct 2026 20:39:54 -0500
+Subject: [PATCH 2/2] chore: ignora frontend/dist (artefacto de build)
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01XyspEdF2VK3ZZBuvHHMbjo
+---
+ .gitignore | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/.gitignore b/.gitignore
+index 583316c..da79c9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -25,4 +25,5 @@ almacenamiento/alertas/*
+ .vscode/
+ .idea/
+ 
+-node_modules/
+\ No newline at end of file
++node_modules/
++dist/
+\ No newline at end of file
+-- 
+2.43.0
+

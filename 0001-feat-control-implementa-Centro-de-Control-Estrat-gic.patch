@@ -1,0 +1,452 @@
+From d98e48000d29ce151030216847ce7e001198383b Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 8 Oct 2026 20:50:50 -0500
+Subject: [PATCH 1/2] =?UTF-8?q?feat(control):=20implementa=20Centro=20de?=
+ =?UTF-8?q?=20Control=20Estrat=C3=A9gico=20(Sprint=202)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Nuevo endpoint GET /api/analisis/resumen-control que agrega cámaras
+  activas, alertas 24h, casos por estado, serie horaria de actividad,
+  ranking de localidades prioritarias y últimas alertas.
+- Nuevo componente CentroControl.jsx que reemplaza el placeholder
+  VistaPendiente en Dashboard.jsx con KPIs, gráfico de actividad,
+  ranking de localidades y feed de alertas recientes.
+- Agrega estilos CSS para kpi-grid/kpi-card (usados por Mapa de Calor
+  pero nunca estilados) y para el nuevo layout del Centro de Control.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01XyspEdF2VK3ZZBuvHHMbjo
+---
+ backend/app/routers/analisis.py           |  57 ++++++++
+ frontend/src/api/client.js                |   2 +
+ frontend/src/components/CentroControl.jsx | 156 ++++++++++++++++++++++
+ frontend/src/pages/Dashboard.jsx          |   4 +-
+ frontend/src/styles.css                   | 145 ++++++++++++++++++++
+ 5 files changed, 362 insertions(+), 2 deletions(-)
+ create mode 100644 frontend/src/components/CentroControl.jsx
+
+diff --git a/backend/app/routers/analisis.py b/backend/app/routers/analisis.py
+index 22d829c..f9cacff 100644
+--- a/backend/app/routers/analisis.py
++++ b/backend/app/routers/analisis.py
+@@ -1,3 +1,5 @@
++from datetime import datetime, timedelta
++
+ from fastapi import APIRouter, Depends
+ from app.core.seguridad import obtener_usuario_actual
+ from app.db.base_datos import FabricaSesion, Evento
+@@ -48,3 +50,58 @@ async def mapa_calor(usuario_actual: dict = Depends(obtener_usuario_actual)):
+         }
+     finally:
+         sesion.close()
++
++
++@router.get("/resumen-control")
++async def resumen_control(usuario_actual: dict = Depends(obtener_usuario_actual)):
++    """Agrega datos de cámaras, casos y actividad reciente para el
++    Centro de Control Estratégico. Todo se calcula a partir de datos
++    que ya existen (cámaras y eventos), sin lógica de IA nueva."""
++    sesion = FabricaSesion()
++    try:
++        ahora = datetime.utcnow()
++        hace_24h = ahora - timedelta(hours=24)
++
++        camaras = sesion.query(Camara).all()
++        total_camaras = len(camaras)
++        camaras_activas = sum(1 for c in camaras if c.estado == "activa")
++
++        eventos_24h = sesion.query(Evento).filter(Evento.marca_tiempo >= hace_24h).all()
++
++        total_eventos = sesion.query(Evento).count()
++        pendientes = sesion.query(Evento).filter(Evento.estado_caso == "pendiente").count()
++        en_seguimiento = sesion.query(Evento).filter(Evento.estado_caso == "en_seguimiento").count()
++        resueltos = sesion.query(Evento).filter(Evento.estado_caso == "resuelto").count()
++
++        serie_horaria = []
++        for i in range(23, -1, -1):
++            inicio_cubeta = (ahora - timedelta(hours=i)).replace(minute=0, second=0, microsecond=0)
++            fin_cubeta = inicio_cubeta + timedelta(hours=1)
++            cantidad = sum(1 for e in eventos_24h if inicio_cubeta <= e.marca_tiempo < fin_cubeta)
++            serie_horaria.append({"hora": inicio_cubeta.strftime("%H:00"), "cantidad": cantidad})
++
++        ranking_localidades = []
++        for localidad in LOCALIDADES_BOGOTA:
++            cantidad = sesion.query(Evento).filter(Evento.ubicacion == localidad["nombre"]).count()
++            if cantidad > 0:
++                ranking_localidades.append({"nombre": localidad["nombre"], "eventos": cantidad})
++        ranking_localidades.sort(key=lambda loc: loc["eventos"], reverse=True)
++        ranking_localidades = ranking_localidades[:5]
++
++        ultimas_alertas = sesion.query(Evento).order_by(Evento.marca_tiempo.desc()).limit(6).all()
++
++        return {
++            "camaras": {"total": total_camaras, "activas": camaras_activas},
++            "alertas_24h": len(eventos_24h),
++            "casos": {
++                "pendientes": pendientes,
++                "en_seguimiento": en_seguimiento,
++                "resueltos": resueltos,
++                "total": total_eventos,
++            },
++            "serie_horaria": serie_horaria,
++            "ranking_localidades": ranking_localidades,
++            "ultimas_alertas": [e.a_diccionario() for e in ultimas_alertas],
++        }
++    finally:
++        sesion.close()
+diff --git a/frontend/src/api/client.js b/frontend/src/api/client.js
+index a9ea31d..316c359 100644
+--- a/frontend/src/api/client.js
++++ b/frontend/src/api/client.js
+@@ -100,6 +100,8 @@ function obtenerToken() {
+ 
+     mapaCalor: () => peticion('/analisis/mapa-calor'),
+ 
++    resumenControl: () => peticion('/analisis/resumen-control'),
++
+     listarLocalidades: () => peticion('/localidades/'),
+ 
+     exportarReporte: async (filtros = {}, formato = 'pdf') => {
+diff --git a/frontend/src/components/CentroControl.jsx b/frontend/src/components/CentroControl.jsx
+new file mode 100644
+index 0000000..00bbac7
+--- /dev/null
++++ b/frontend/src/components/CentroControl.jsx
+@@ -0,0 +1,156 @@
++import { useEffect, useState } from 'react';
++import { api } from '../api/client';
++
++function tiempoRelativo(fechaIso) {
++    const diferenciaMs = Date.now() - new Date(fechaIso).getTime();
++    const minutos = Math.max(0, Math.floor(diferenciaMs / 60000));
++    if (minutos < 1) return 'justo ahora';
++    if (minutos < 60) return `hace ${minutos} min`;
++    const horas = Math.floor(minutos / 60);
++    if (horas < 24) return `hace ${horas} h`;
++    return `hace ${Math.floor(horas / 24)} d`;
++}
++
++export default function CentroControl() {
++    const [resumen, setResumen] = useState(null);
++    const [cargando, setCargando] = useState(true);
++    const [error, setError] = useState(null);
++
++    useEffect(() => {
++        let activo = true;
++
++        function cargar() {
++            api.resumenControl()
++                .then((datos) => { if (activo) { setResumen(datos); setError(null); } })
++                .catch((err) => { if (activo) setError(err.message); })
++                .finally(() => { if (activo) setCargando(false); });
++        }
++
++        cargar();
++        const intervalo = setInterval(cargar, 15000);
++        return () => { activo = false; clearInterval(intervalo); };
++    }, []);
++
++    if (cargando) {
++        return (
++            <div>
++                <div className="dashboard-toolbar">
++                    <h2>Centro de Control Estratégico</h2>
++                </div>
++                <div className="mapa-contenedor mapa-contenedor-vacio" style={{ height: '200px' }}>
++                    <span className="spinner-conexion" />
++                    <span>Cargando panorama operativo…</span>
++                </div>
++            </div>
++        );
++    }
++
++    if (error) {
++        return (
++            <div className="estado-vacio">
++                <span className="estado-vacio-icono">⚠️</span>
++                <p>No se pudo cargar el Centro de Control: {error}</p>
++            </div>
++        );
++    }
++
++    const { camaras, alertas_24h: alertas24h, casos, serie_horaria: serieHoraria, ranking_localidades: ranking, ultimas_alertas: ultimasAlertas } = resumen;
++    const maximoHora = Math.max(...serieHoraria.map((h) => h.cantidad), 1);
++    const maximoRanking = Math.max(...ranking.map((r) => r.eventos), 1);
++
++    return (
++        <div>
++            <div className="dashboard-toolbar">
++                <h2>Centro de Control Estratégico</h2>
++                <span className="mapa-nota">Vista consolidada del sistema · se actualiza cada 15s</span>
++            </div>
++
++            <div className="kpi-grid">
++                <div className="kpi-card">
++                    <span className="kpi-valor">{camaras.activas}/{camaras.total}</span>
++                    <span className="kpi-etiqueta">Cámaras activas</span>
++                </div>
++                <div className="kpi-card kpi-card-alto">
++                    <span className="kpi-valor">{alertas24h}</span>
++                    <span className="kpi-etiqueta">Alertas últimas 24h</span>
++                </div>
++                <div className="kpi-card">
++                    <span className="kpi-valor">{casos.pendientes}</span>
++                    <span className="kpi-etiqueta">Casos pendientes</span>
++                </div>
++                <div className="kpi-card">
++                    <span className="kpi-valor">{casos.resueltos}/{casos.total}</span>
++                    <span className="kpi-etiqueta">Casos resueltos</span>
++                </div>
++            </div>
++
++            <div className="centro-control-layout">
++                <div className="mapa-tarjeta">
++                    <h3>Actividad últimas 24 horas</h3>
++                    {alertas24h === 0 ? (
++                        <p className="mapa-nota">Sin eventos en las últimas 24 horas.</p>
++                    ) : (
++                        <div className="grafico-barras">
++                            {serieHoraria.map((punto) => (
++                                <div className="grafico-barra-col" key={punto.hora} title={`${punto.hora} · ${punto.cantidad} evento(s)`}>
++                                    <div
++                                        className="grafico-barra"
++                                        style={{ height: `${Math.max((punto.cantidad / maximoHora) * 100, punto.cantidad > 0 ? 6 : 2)}%` }}
++                                    />
++                                    <span className="grafico-barra-etiqueta">{punto.hora.slice(0, 2)}</span>
++                                </div>
++                            ))}
++                        </div>
++                    )}
++                </div>
++
++                <div className="ranking-localidades">
++                    <h3>Localidades prioritarias</h3>
++                    {ranking.length === 0 ? (
++                        <p className="mapa-nota">Aún sin eventos suficientes para priorizar.</p>
++                    ) : (
++                        <div className="ranking-lista">
++                            {ranking.map((loc, indice) => (
++                                <div key={loc.nombre} className="ranking-fila">
++                                    <span className="ranking-posicion">#{indice + 1}</span>
++                                    <div className="ranking-info">
++                                        <div className="ranking-nombre">{loc.nombre}</div>
++                                        <div className="ranking-barra-track">
++                                            <div
++                                                className="ranking-barra-relleno"
++                                                style={{ width: `${(loc.eventos / maximoRanking) * 100}%`, background: '#3b82f6' }}
++                                            />
++                                        </div>
++                                    </div>
++                                    <span className="ranking-valor">{loc.eventos}</span>
++                                </div>
++                            ))}
++                        </div>
++                    )}
++                </div>
++            </div>
++
++            <div className="feed-alertas">
++                <h3>Últimas alertas</h3>
++                {ultimasAlertas.length === 0 ? (
++                    <p className="tarjeta-camara-espera">No hay alertas registradas todavía.</p>
++                ) : (
++                    <ul className="feed-alertas-lista">
++                        {ultimasAlertas.map((alerta) => (
++                            <li key={alerta.id} className="feed-alertas-item">
++                                <span className={`etiqueta-riesgo etiqueta-${alerta.nivel_riesgo?.toLowerCase()}`}>
++                                    {alerta.nivel_riesgo}
++                                </span>
++                                <div className="feed-alertas-texto">
++                                    <strong>{alerta.tipo_evento || 'Evento'}</strong> en {alerta.ubicacion || 'ubicación desconocida'}
++                                    <span className="feed-alertas-descripcion">{alerta.descripcion}</span>
++                                </div>
++                                <span className="feed-alertas-tiempo">{tiempoRelativo(alerta.marca_tiempo)}</span>
++                            </li>
++                        ))}
++                    </ul>
++                )}
++            </div>
++        </div>
++    );
++}
+diff --git a/frontend/src/pages/Dashboard.jsx b/frontend/src/pages/Dashboard.jsx
+index ed2a61f..67941de 100644
+--- a/frontend/src/pages/Dashboard.jsx
++++ b/frontend/src/pages/Dashboard.jsx
+@@ -6,8 +6,8 @@ import PanelAlertas from '../components/PanelAlertas';
+ import AlertasInteligentes from '../components/AlertasInteligentes';
+ import BitacoraCasos from '../components/BitacoraCasos';
+ import GestionUsuarios from '../components/GestionUsuarios';
+-import VistaPendiente from '../components/VistaPendiente';
+ import Reportes from '../components/Reportes';
++import CentroControl from '../components/CentroControl';
+ 
+ const RESTRICCIONES_VISTA = {
+     usuarios: ['admin'],
+@@ -49,7 +49,7 @@ export default function Dashboard({ sesion, onCerrarSesion }) {
+         case 'camaras':
+             return <MosaicoCamaras rol={rol} />; // misma gestión CRUD, distinto punto de entrada del menú
+         case 'control':
+-            return <VistaPendiente titulo="Centro de Control Estratégico" icono="🏛️" sprintSugerido="Sprint 2 - Dashboard completo" />;
++            return <CentroControl />;
+         case 'bitacora':
+             return <BitacoraCasos rol={rol} />;
+         case 'reportes':
+diff --git a/frontend/src/styles.css b/frontend/src/styles.css
+index b94366c..29a7e2a 100644
+--- a/frontend/src/styles.css
++++ b/frontend/src/styles.css
+@@ -1359,3 +1359,148 @@ button:active:not(:disabled) {
+     background: rgba(239, 68, 68, 0.18);
+     color: #fca5a5;
+ }
++
++/* ---------- KPIs reutilizables (Centro de Control, Análisis Territorial) ---------- */
++
++.kpi-grid {
++    display: grid;
++    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
++    gap: 0.85rem;
++    margin-bottom: 1rem;
++}
++
++.kpi-card {
++    background: var(--bg-panel);
++    border-radius: 10px;
++    padding: 1rem 1.1rem;
++    border: 1px solid var(--borde-sutil);
++    box-shadow: var(--sombra-panel);
++    display: flex;
++    flex-direction: column;
++    gap: 0.3rem;
++}
++
++.kpi-card-alto {
++    border-color: rgba(239, 68, 68, 0.45);
++}
++
++.kpi-valor {
++    font-family: 'Share Tech Mono', monospace;
++    font-size: 1.6rem;
++    line-height: 1.1;
++}
++
++.kpi-etiqueta {
++    font-size: 0.75rem;
++    opacity: 0.7;
++}
++
++/* ---------- Centro de Control Estratégico ---------- */
++
++.centro-control-layout {
++    display: grid;
++    grid-template-columns: 2fr 1fr;
++    gap: 1rem;
++    align-items: start;
++    margin-bottom: 1rem;
++}
++
++@media (max-width: 900px) {
++    .centro-control-layout {
++        grid-template-columns: 1fr;
++    }
++}
++
++.centro-control-layout .mapa-tarjeta h3,
++.centro-control-layout .ranking-localidades h3 {
++    font-family: 'Rajdhani', sans-serif;
++    margin-top: 0;
++    font-size: 1rem;
++}
++
++.grafico-barras {
++    display: flex;
++    align-items: flex-end;
++    gap: 3px;
++    height: 220px;
++    padding-top: 0.5rem;
++}
++
++.grafico-barra-col {
++    flex: 1;
++    display: flex;
++    flex-direction: column;
++    align-items: center;
++    justify-content: flex-end;
++    height: 100%;
++    gap: 0.3rem;
++}
++
++.grafico-barra {
++    width: 100%;
++    min-height: 2px;
++    border-radius: 3px 3px 0 0;
++    background: linear-gradient(180deg, #3b82f6, rgba(59, 130, 246, 0.35));
++    transition: height 0.4s ease;
++}
++
++.grafico-barra-etiqueta {
++    font-family: 'Share Tech Mono', monospace;
++    font-size: 0.6rem;
++    opacity: 0.5;
++    writing-mode: vertical-rl;
++    transform: rotate(180deg);
++}
++
++.feed-alertas {
++    background: var(--bg-panel);
++    border-radius: 10px;
++    padding: 1rem;
++    border: 1px solid var(--borde-sutil);
++    box-shadow: var(--sombra-panel);
++}
++
++.feed-alertas h3 {
++    font-family: 'Rajdhani', sans-serif;
++    margin-top: 0;
++    font-size: 1rem;
++}
++
++.feed-alertas-lista {
++    list-style: none;
++    margin: 0;
++    padding: 0;
++    display: flex;
++    flex-direction: column;
++    gap: 0.6rem;
++}
++
++.feed-alertas-item {
++    display: grid;
++    grid-template-columns: auto 1fr auto;
++    align-items: center;
++    gap: 0.75rem;
++    padding: 0.6rem 0.7rem;
++    border-radius: 8px;
++    background: var(--bg-card);
++    border: 1px solid var(--borde-sutil);
++}
++
++.feed-alertas-texto {
++    display: flex;
++    flex-direction: column;
++    font-size: 0.82rem;
++    gap: 0.15rem;
++}
++
++.feed-alertas-descripcion {
++    font-size: 0.72rem;
++    opacity: 0.65;
++}
++
++.feed-alertas-tiempo {
++    font-family: 'Share Tech Mono', monospace;
++    font-size: 0.7rem;
++    opacity: 0.6;
++    white-space: nowrap;
++}
+-- 
+2.43.0
+
