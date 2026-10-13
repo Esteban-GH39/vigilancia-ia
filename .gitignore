@@ -17,6 +17,9 @@ almacenamiento/alertas/*
 !almacenamiento/videos/.gitkeep
 !almacenamiento/alertas/.gitkeep
 
+# Reportes y logs generados por el bot RPA
+backend/almacenamiento/rpa/
+
 # Variables de entorno / secretos
 .env
 

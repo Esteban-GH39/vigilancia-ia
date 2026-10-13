@@ -64,6 +64,23 @@ pnpm run dev
 
 Disponible en `http://localhost:5173`.
 
+**Bot RPA (generación automática de reportes + escalamiento de casos):**
+
+Con el backend corriendo en otra terminal:
+
+```bash
+cd backend
+python -m rpa.bot_reportes --ahora   # ejecuta un ciclo completo ya mismo
+python -m rpa.bot_reportes           # modo continuo: reporte diario + revisión cada 2h
+```
+
+Genera y guarda el reporte PDF del día (reutilizando `/api/reportes/exportar`),
+revisa la base de datos buscando casos "pendiente" con más de 24h sin
+gestionar, y deja constancia de cada corrida en `backend/almacenamiento/rpa/bot.log`.
+Si se configuran las variables `RPA_SMTP_*`, también envía el reporte y las
+alertas de escalamiento por correo. Ver el encabezado de
+`backend/rpa/bot_reportes.py` para el detalle de las variables de entorno.
+
 ## Stack técnico
 
-Python · FastAPI · OpenCV · YOLOv8 (Ultralytics) · SQLAlchemy · SQLite · WebSockets · Docker · React · Vite
+Python · FastAPI · OpenCV · YOLOv8 (Ultralytics) · SQLAlchemy · SQLite · WebSockets · Docker · React · Vite · RPA (bot de reportes y escalamiento)
