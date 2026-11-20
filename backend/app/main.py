@@ -9,6 +9,8 @@ from app.db.repositorio_usuarios import asegurar_admin_inicial
 from app.routers import camaras, websocket, eventos, alertas, auth, analisis, localidades, usuarios, reportes
 from app.core.config import HOST_API, PUERTO_API
 
+from app.routers import camaras, websocket, eventos, alertas, auth, analisis, localidades, usuarios, reportes, bot_rpa
+
 app = FastAPI (
     title="Sistema de Vigilancia con IA",
     description="Backend modular: API asíncrona + motor de IA desacoplado",
@@ -32,6 +34,7 @@ app.include_router(websocket.router)
 app.include_router(analisis.router)
 app.include_router(localidades.router)
 app.include_router(reportes.router)
+app.include_router(bot_rpa.router)
 
 
 @app.on_event("startup")

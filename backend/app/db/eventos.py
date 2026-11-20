@@ -4,4 +4,5 @@ from app.db.base_datos import (
     obtener_eventos_filtrados,
     obtener_estadisticas_eventos,
     actualizar_estado_evento,
+    obtener_casos_pendientes_vencidos,
 )

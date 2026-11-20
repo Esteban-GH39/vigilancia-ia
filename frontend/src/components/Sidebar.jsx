@@ -23,6 +23,7 @@ const SECCIONES = [
         items: [
         { id: 'camaras', icono: '🎥', texto: 'Gestión de Cámaras', roles: ['admin', 'operador'] },
         { id: 'usuarios', icono: '👥', texto: 'Gestión de Usuarios', roles: ['admin'] },
+        { id: 'rpa', icono: '🤖', texto: 'Bot RPA', roles: ['admin', 'operador'] },
         ],
     },
 ];

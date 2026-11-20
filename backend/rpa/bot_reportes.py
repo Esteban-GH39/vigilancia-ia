@@ -32,6 +32,7 @@ Variables de entorno (todas opcionales, tienen un valor por defecto):
 """
 
 import argparse
+import json
 import logging
 import os
 import smtplib
@@ -48,7 +49,7 @@ DIRECTORIO_BACKEND = Path(__file__).resolve().parent.parent  # .../backend
 sys.path.insert(0, str(DIRECTORIO_BACKEND))
 
 import configuracion  # noqa: E402
-from app.db.base_datos import FabricaSesion, Evento  # noqa: E402
+from app.db.base_datos import FabricaSesion, obtener_casos_pendientes_vencidos  # noqa: E402
 
 # ---------------------------------------------------------------- Config
 
@@ -67,6 +68,7 @@ SMTP_DESTINATARIO = os.getenv("RPA_SMTP_DESTINATARIO")
 CARPETA_RPA = DIRECTORIO_BACKEND / "almacenamiento" / "rpa"
 CARPETA_REPORTES = CARPETA_RPA / "reportes"
 CARPETA_REPORTES.mkdir(parents=True, exist_ok=True)
+ARCHIVO_HISTORIAL = CARPETA_RPA / "historial.jsonl"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -78,6 +80,22 @@ logging.basicConfig(
 )
 log = logging.getLogger("rpa")
 
+# ---------------------------------------------------------------- Historial
+
+def registrar_ejecucion(tarea: str, inicio: datetime, resultado: str, detalle: str):
+    """Agrega una línea al historial (historial.jsonl) con el resultado de una tarea."""
+    registro = {
+        "tarea": tarea,
+        "inicio": inicio.isoformat(timespec="seconds"),
+        "fin": datetime.now().isoformat(timespec="seconds"),
+        "resultado": resultado,
+        "detalle": detalle,
+    }
+    try:
+        with open(ARCHIVO_HISTORIAL, "a", encoding="utf-8") as archivo:
+            archivo.write(json.dumps(registro, ensure_ascii=False) + "\n")
+    except Exception as error:
+        log.error("No se pudo escribir el historial: %s", error)
 
 # ---------------------------------------------------------------- Setup
 
@@ -114,11 +132,13 @@ def autenticarse() -> str:
 # ---------------------------------------------------------------- Job 1: Reporte diario
 
 def generar_y_entregar_reporte():
+    inicio = datetime.now()
     log.info("— Iniciando ciclo de generación de reporte —")
     try:
         token = autenticarse()
     except Exception as error:
         log.error("No se pudo autenticar el bot contra la API (%s): %s", API_URL, error)
+        registrar_ejecucion("reporte", inicio, "error", f"No se pudo autenticar: {error}")
         return
 
     try:
@@ -131,6 +151,7 @@ def generar_y_entregar_reporte():
         respuesta.raise_for_status()
     except Exception as error:
         log.error("No se pudo descargar el reporte: %s", error)
+        registrar_ejecucion("reporte", inicio, "error", f"No se pudo descargar el reporte: {error}")
         return
 
     marca = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -147,27 +168,19 @@ def generar_y_entregar_reporte():
     else:
         log.info("SMTP no configurado: el reporte queda guardado localmente, no se envía correo.")
 
+    registrar_ejecucion("reporte", inicio, "ok", ruta_pdf.name)
+
 
 # ---------------------------------------------------------------- Job 2: Escalamiento de casos
 
 def revisar_casos_pendientes():
+    inicio = datetime.now()
     log.info("— Revisando casos pendientes para escalamiento —")
-    limite = datetime.utcnow() - timedelta(hours=HORAS_ESCALAMIENTO)
-
-    sesion = FabricaSesion()
-    try:
-        vencidos = (
-            sesion.query(Evento)
-            .filter(Evento.estado_caso == "pendiente", Evento.marca_tiempo <= limite)
-            .order_by(Evento.marca_tiempo.asc())
-            .all()
-        )
-        vencidos = [e.a_diccionario() for e in vencidos]
-    finally:
-        sesion.close()
+    vencidos = obtener_casos_pendientes_vencidos(HORAS_ESCALAMIENTO)
 
     if not vencidos:
         log.info("Sin casos pendientes vencidos (umbral: %.0fh).", HORAS_ESCALAMIENTO)
+        registrar_ejecucion("escalamiento", inicio, "ok", "Sin casos pendientes vencidos")
         return
 
     log.warning("%d caso(s) pendiente(s) hace más de %.0fh sin gestión:", len(vencidos), HORAS_ESCALAMIENTO)
@@ -184,7 +197,8 @@ def revisar_casos_pendientes():
                    f"{HORAS_ESCALAMIENTO:.0f}h sin que nadie los gestione:\n\n" + "\n".join(lineas),
         )
 
-
+    registrar_ejecucion("escalamiento", inicio, "ok", f"{len(vencidos)} caso(s) pendiente(s) vencido(s)")
+    
 # ---------------------------------------------------------------- Correo
 
 def enviar_correo(asunto: str, cuerpo: str, adjunto: Path = None):
