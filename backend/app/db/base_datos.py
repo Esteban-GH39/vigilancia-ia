@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, timedelta
 import configuracion
 
 Base = declarative_base()
@@ -150,5 +150,22 @@ def actualizar_estado_evento(id_evento, estado):
         sesion.commit()
         sesion.refresh(evento)
         return evento.a_diccionario()
+    finally:
+        sesion.close()
+
+def obtener_casos_pendientes_vencidos(horas):
+    """Casos en estado 'pendiente' con más de `horas` sin gestión, del más antiguo al más reciente."""
+
+    limite = datetime.utcnow() - timedelta(hours=horas)
+
+    sesion = FabricaSesion()
+    try:
+        eventos = (
+            sesion.query(Evento)
+            .filter(Evento.estado_caso == "pendiente", Evento.marca_tiempo <= limite)
+            .order_by(Evento.marca_tiempo.asc())
+            .all()
+        )
+        return [evento.a_diccionario() for evento in eventos]
     finally:
         sesion.close()

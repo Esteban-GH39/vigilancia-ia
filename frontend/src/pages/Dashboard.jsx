@@ -8,10 +8,12 @@ import BitacoraCasos from '../components/BitacoraCasos';
 import GestionUsuarios from '../components/GestionUsuarios';
 import Reportes from '../components/Reportes';
 import CentroControl from '../components/CentroControl';
+import BotRPA from '../components/BotRPA';
 
 const RESTRICCIONES_VISTA = {
     usuarios: ['admin'],
     camaras: ['admin', 'operador'],
+    rpa: ['admin', 'operador'],
 };
 
 const ETIQUETA_ROL = {
@@ -56,6 +58,8 @@ export default function Dashboard({ sesion, onCerrarSesion }) {
             return <Reportes />;
         case 'usuarios':
             return <GestionUsuarios />;
+        case 'rpa':
+            return <BotRPA />;
         default:
             return null;
         }

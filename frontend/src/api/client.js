@@ -104,6 +104,33 @@ function obtenerToken() {
 
     listarLocalidades: () => peticion('/localidades/'),
 
+    estadoBotRpa: () => peticion('/rpa/estado'),
+    
+    ejecutarBotRpa: () => peticion('/rpa/ejecutar', { method: 'POST' }),
+
+    historialBotRpa: (limite = 20) => peticion(`/rpa/historial?limite=${limite}`),
+
+    listarReportesBotRpa: () => peticion('/rpa/reportes'),
+
+    obtenerPdfBotRpa: async (nombre) => {
+        const token = obtenerToken();
+        const respuesta = await fetch(`${BASE_API}/rpa/reportes/${encodeURIComponent(nombre)}`, {
+            headers: {
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+        });
+
+        if (!respuesta.ok) {
+            const detalle = await respuesta.json().catch(() => ({}));
+            throw new Error(detalle.detail || 'No se pudo abrir el reporte');
+        }
+
+        const blob = await respuesta.blob();
+        return window.URL.createObjectURL(blob);
+    },
+
+    casosPendientesBotRpa: () => peticion('/rpa/pendientes'),
+
     exportarReporte: async (filtros = {}, formato = 'pdf') => {
         const token = obtenerToken();
         const params = new URLSearchParams({ formato });
